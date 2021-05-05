@@ -24,15 +24,10 @@ func main() {
 	}
 	port := os.Getenv("PORT")
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello World")
-	})
-
-	app.Get("/p", func(c *fiber.Ctx) error {
-		return c.SendString("Not Found")
-	})
-
+	app.Get("/p", postsController.GetAll)
 	app.Get("/p/:id", postsController.GetOne)
+
+	app.Get("/c", categoriesController.GetAll)
 	app.Get("/c/:id", categoriesController.GetOne)
 
 	app.Listen(":" + port)

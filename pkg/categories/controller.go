@@ -10,6 +10,7 @@ import (
 var categoriesService = NewCategoriesService()
 
 type CategoriesController interface {
+	GetAll(c *fiber.Ctx) error
 	GetOne(c *fiber.Ctx) error
 }
 
@@ -19,6 +20,22 @@ func NewCategoriesController() CategoriesController {
 	return &controller{}
 }
 
+func (*controller) GetAll(c *fiber.Ctx) error {
+	categories, err := categoriesService.FindAll()
+
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"data":    nil,
+			"message": "Error fetching categories",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    categories,
+		"message": "Categories retrieved",
+	})
+}
+
 func (*controller) GetOne(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -26,6 +43,13 @@ func (*controller) GetOne(c *fiber.Ctx) error {
 	}
 
 	category, err := categoriesService.Find(id)
+
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"data":    nil,
+			"message": fmt.Sprintf("Category with the id:%d not found", id),
+		})
+	}
 
 	return c.JSON(fiber.Map{
 		"data":    category,

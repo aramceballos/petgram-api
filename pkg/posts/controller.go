@@ -10,6 +10,7 @@ import (
 var postsService = NewPostsService()
 
 type PostsController interface {
+	GetAll(c *fiber.Ctx) error
 	GetOne(c *fiber.Ctx) error
 }
 
@@ -17,6 +18,22 @@ type controller struct{}
 
 func NewPostsController() PostsController {
 	return &controller{}
+}
+
+func (*controller) GetAll(c *fiber.Ctx) error {
+	posts, err := postsService.FindAll()
+
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"data":    nil,
+			"message": "Error fetching posts",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    posts,
+		"message": "Post retrieved",
+	})
 }
 
 func (*controller) GetOne(c *fiber.Ctx) error {

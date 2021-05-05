@@ -19,6 +19,30 @@ func NewPostgresRepository() Repository {
 	return instance
 }
 
+func (*repo) FindAll() (posts []Post, err error) {
+
+	dbUser := os.Getenv("DB_USER")
+	dbHost := os.Getenv("DB_HOST")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
+
+	opt, err := pg.ParseURL(url)
+	if err != nil {
+		fmt.Println("Unable to connect to database")
+		return
+	}
+
+	db := pg.Connect(opt)
+	defer db.Close()
+
+	var p []Post
+	err = db.Model(&p).Select()
+
+	return p, err
+}
+
 func (*repo) Find(id int) (post Post, err error) {
 
 	dbUser := os.Getenv("DB_USER")
