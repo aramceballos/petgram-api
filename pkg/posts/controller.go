@@ -10,7 +10,7 @@ import (
 var postsService = NewPostsService()
 
 type PostsController interface {
-	GetPost(c *fiber.Ctx) error
+	GetOne(c *fiber.Ctx) error
 }
 
 type controller struct{}
@@ -19,7 +19,7 @@ func NewPostsController() PostsController {
 	return &controller{}
 }
 
-func (*controller) GetPost(c *fiber.Ctx) error {
+func (*controller) GetOne(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		fmt.Println("Error casting id to int")
