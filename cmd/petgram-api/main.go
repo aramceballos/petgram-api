@@ -7,6 +7,7 @@ import (
 	"github.com/aramceballos/petgram-api/pkg/categories"
 	"github.com/aramceballos/petgram-api/pkg/posts"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 )
 
@@ -17,6 +18,8 @@ func main() {
 	app := fiber.New(fiber.Config{
 		CaseSensitive: true,
 	})
+
+	app.Use(cors.New())
 
 	err := godotenv.Load()
 	if err != nil {
