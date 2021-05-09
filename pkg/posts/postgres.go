@@ -38,7 +38,14 @@ func (*repo) FindAll() (posts []Post, err error) {
 	defer db.Close()
 
 	var p []Post
-	err = db.Model(&p).Select()
+	err = db.Model(&p).
+		ColumnExpr("post.*").
+		ColumnExpr("u.name, u.username").
+		Join("JOIN users AS u ON u.id = post.user_id").
+		Select()
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return p, err
 }
