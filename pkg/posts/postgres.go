@@ -62,7 +62,17 @@ func (*repo) Find(id int) (post Post, err error) {
 	defer db.Close()
 
 	p := &Post{ID: id}
-	err = db.Model(p).WherePK().Select()
+	err = db.Model(p).
+		ColumnExpr("post.*").
+		ColumnExpr("u.name, u.username").
+		WherePK().
+		Join("JOIN users AS u ON u.id = post.user_id").
+		Select()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(*p)
 
 	return *p, err
 }
