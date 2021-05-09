@@ -40,7 +40,7 @@ func (*repo) FindAll() (posts []Post, err error) {
 	var p []Post
 	err = db.Model(&p).
 		ColumnExpr("post.*").
-		ColumnExpr("u.name, u.username").
+		ColumnExpr("u.name, u.username, u.email").
 		Join("JOIN users AS u ON u.id = post.user_id").
 		Select()
 	if err != nil {
