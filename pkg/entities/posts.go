@@ -1,4 +1,4 @@
-package posts
+package entities
 
 type Post struct {
 	ID          int    `json:"id"`

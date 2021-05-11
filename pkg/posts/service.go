@@ -1,26 +1,30 @@
 package posts
 
-var postsRepo = NewPostgresRepository()
+import "github.com/aramceballos/petgram-api/pkg/entities"
 
-type PostsService interface {
-	FindAll() (posts []Post, err error)
-	Find(id int) (post Post, err error)
+type Service interface {
+	FetchPosts() ([]entities.Post, error)
+	FetchPost(int) (entities.Post, error)
 }
 
-type service struct{}
-
-func NewPostsService() PostsService {
-	return &service{}
+type service struct {
+	repository Repository
 }
 
-func (*service) FindAll() (posts []Post, err error) {
-	posts, err = postsRepo.FindAll()
+func NewService(r Repository) Service {
+	return &service{
+		repository: r,
+	}
+}
+
+func (s *service) FetchPosts() ([]entities.Post, error) {
+	posts, err := s.repository.ReadPosts()
 
 	return posts, err
 }
 
-func (*service) Find(id int) (post Post, err error) {
-	post, err = postsRepo.Find(id)
+func (s *service) FetchPost(id int) (entities.Post, error) {
+	post, err := s.repository.ReadPost(id)
 
 	return post, err
 }

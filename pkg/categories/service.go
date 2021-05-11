@@ -1,26 +1,30 @@
 package categories
 
-var categoriesRepo = NewPostgresRepository()
+import "github.com/aramceballos/petgram-api/pkg/entities"
 
-type CategoriesService interface {
-	FindAll() (categories []Category, err error)
-	Find(id int) (category Category, err error)
+type Service interface {
+	FetchCategories() ([]entities.Category, error)
+	FetchCategory(int) (entities.Category, error)
 }
 
-type service struct{}
-
-func NewCategoriesService() CategoriesService {
-	return &service{}
+type service struct {
+	repository Repository
 }
 
-func (*service) FindAll() (categories []Category, err error) {
-	categories, err = categoriesRepo.FindAll()
+func NewService(r Repository) Service {
+	return &service{
+		repository: r,
+	}
+}
+
+func (s *service) FetchCategories() ([]entities.Category, error) {
+	categories, err := s.repository.ReadCategories()
 
 	return categories, err
 }
 
-func (*service) Find(id int) (category Category, err error) {
-	category, err = categoriesRepo.Find(id)
+func (s *service) FetchCategory(id int) (entities.Category, error) {
+	category, err := s.repository.ReadCategory(id)
 
 	return category, err
 }

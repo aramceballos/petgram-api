@@ -1,10 +1,89 @@
 package posts
 
-type Reader interface {
-	FindAll() (posts []Post, err error)
-	Find(id int) (post Post, err error)
-}
+import (
+	"fmt"
+	"os"
+
+	"github.com/aramceballos/petgram-api/pkg/entities"
+	"github.com/go-pg/pg/v10"
+)
 
 type Repository interface {
-	Reader
+	ReadPosts() ([]entities.Post, error)
+	ReadPost(int) (entities.Post, error)
+}
+
+type repo struct{}
+
+var instance *repo
+
+func NewPostgresRepository() Repository {
+	if instance == nil {
+		instance = &repo{}
+	}
+
+	return instance
+}
+
+func (*repo) ReadPosts() ([]entities.Post, error) {
+
+	dbUser := os.Getenv("DB_USER")
+	dbHost := os.Getenv("DB_HOST")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
+
+	opt, err := pg.ParseURL(url)
+	if err != nil {
+		fmt.Println("Unable to connect to database")
+		return []entities.Post{}, err
+	}
+
+	db := pg.Connect(opt)
+	defer db.Close()
+
+	var p []entities.Post
+	err = db.Model(&p).
+		ColumnExpr("post.*").
+		ColumnExpr("u.name, u.username, u.email").
+		Join("JOIN users AS u ON u.id = post.user_id").
+		Select()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return p, err
+}
+
+func (*repo) ReadPost(id int) (entities.Post, error) {
+
+	dbUser := os.Getenv("DB_USER")
+	dbHost := os.Getenv("DB_HOST")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
+
+	opt, err := pg.ParseURL(url)
+	if err != nil {
+		fmt.Println("Unable to connect to database")
+		return entities.Post{}, err
+	}
+
+	db := pg.Connect(opt)
+	defer db.Close()
+
+	p := &entities.Post{ID: id}
+	err = db.Model(p).
+		ColumnExpr("post.*").
+		ColumnExpr("u.name, u.username, u.email").
+		WherePK().
+		Join("JOIN users AS u ON u.id = post.user_id").
+		Select()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return *p, err
 }
