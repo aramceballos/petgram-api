@@ -4,47 +4,47 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/aramceballos/petgram-api/pkg/posts"
+	"github.com/aramceballos/petgram-api/pkg/categories"
 	"github.com/gofiber/fiber/v2"
 )
 
-func PostsRouter(app fiber.Router, service posts.Service) {
-	app.Get("/p", getPosts(service))
-	app.Get("/p/:id", getPost(service))
+func CategoriesRouter(app fiber.Router, service categories.Service) {
+	app.Get("/c", getCategories(service))
+	app.Get("/c/:id", getCategory(service))
 }
 
-func getPosts(service posts.Service) fiber.Handler {
+func getCategories(service categories.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		posts, err := service.FetchPosts()
+		categories, err := service.FetchCategories()
 		if err != nil {
 			_ = c.JSON(&fiber.Map{
-				"data":    posts,
+				"data":    categories,
 				"message": err,
 			})
 		}
 		return c.JSON(&fiber.Map{
-			"data":    posts,
+			"data":    categories,
 			"message": "Posts retrieved",
 		})
 	}
 }
 
-func getPost(service posts.Service) fiber.Handler {
+func getCategory(service categories.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("id"))
 		if err != nil {
 			fmt.Println("Error casting id to int")
 		}
 
-		posts, err := service.FetchPost(id)
+		category, err := service.FetchCategory(id)
 		if err != nil {
 			_ = c.JSON(&fiber.Map{
-				"posts":   posts,
+				"data":    category,
 				"message": err,
 			})
 		}
 		return c.JSON(&fiber.Map{
-			"posts":   posts,
+			"data":    category,
 			"message": "Posts retrieved",
 		})
 	}
