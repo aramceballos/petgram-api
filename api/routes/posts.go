@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/aramceballos/petgram-api/api/middleware"
 	"github.com/aramceballos/petgram-api/pkg/posts"
 	"github.com/gofiber/fiber/v2"
 )
 
 func PostsRouter(app fiber.Router, service posts.Service) {
-	app.Get("/p", getPosts(service))
-	app.Get("/p/:id", getPost(service))
+	app.Get("/p", middleware.Protected(), getPosts(service))
+	app.Get("/p/:id", middleware.Protected(), getPost(service))
 }
 
 func getPosts(service posts.Service) fiber.Handler {
