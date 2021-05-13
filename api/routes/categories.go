@@ -19,11 +19,13 @@ func getCategories(service categories.Service) fiber.Handler {
 		categories, err := service.FetchCategories()
 		if err != nil {
 			_ = c.JSON(&fiber.Map{
-				"data":    categories,
+				"status":  "error",
 				"message": err,
+				"data":    categories,
 			})
 		}
 		return c.JSON(&fiber.Map{
+			"status":  "success",
 			"data":    categories,
 			"message": "Posts retrieved",
 		})
@@ -40,13 +42,15 @@ func getCategory(service categories.Service) fiber.Handler {
 		category, err := service.FetchCategory(id)
 		if err != nil {
 			_ = c.JSON(&fiber.Map{
-				"data":    category,
+				"status":  "error",
 				"message": err,
+				"data":    category,
 			})
 		}
 		return c.JSON(&fiber.Map{
-			"data":    category,
+			"status":  "success",
 			"message": "Posts retrieved",
+			"data":    category,
 		})
 	}
 }

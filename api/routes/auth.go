@@ -61,8 +61,9 @@ func login(service auth.Service) fiber.Handler {
 			}
 
 			return c.JSON(&fiber.Map{
-				"data":    nil,
+				"status":  "error",
 				"message": err,
+				"data":    nil,
 			})
 		}
 		return c.JSON(&fiber.Map{
@@ -85,14 +86,16 @@ func signup(service auth.Service) fiber.Handler {
 
 		if err != nil {
 			return c.JSON(fiber.Map{
-				"data":    nil,
+				"status":  "error",
 				"message": "Error creating user",
+				"data":    nil,
 			})
 		}
 
 		return c.JSON(fiber.Map{
-			"data":    nil,
+			"status":  "success",
 			"message": "User created",
+			"data":    nil,
 		})
 	}
 }

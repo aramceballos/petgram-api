@@ -12,6 +12,6 @@ RUN go mod download
 
 COPY . .
 
-RUN go build cmd/petgram-api/main.go
+RUN go build api/app.go
 
-CMD ["./main"]
+CMD ["./app"]

@@ -13,15 +13,6 @@ import (
 )
 
 func main() {
-	postsRepo := posts.NewPostgresRepository()
-	postsService := posts.NewService(postsRepo)
-
-	categoriesRepo := categories.NewPostgresRepository()
-	categoriesService := categories.NewService(categoriesRepo)
-
-	authRepo := auth.NewPostgresRepository()
-	authService := auth.NewService(authRepo)
-
 	app := fiber.New(fiber.Config{
 		CaseSensitive: true,
 	})
@@ -32,10 +23,23 @@ func main() {
 		fmt.Println("Error loading .env file")
 	}
 
+	postsRepo := posts.NewPostgresRepository()
+	postsService := posts.NewService(postsRepo)
+
+	categoriesRepo := categories.NewPostgresRepository()
+	categoriesService := categories.NewService(categoriesRepo)
+
+	authRepo := auth.NewPostgresRepository()
+	authService := auth.NewService(authRepo)
+
 	api := app.Group("/api")
+
 	routes.PostsRouter(api, postsService)
+
 	routes.CategoriesRouter(api, categoriesService)
+
 	routes.AuthRouter(api, authService)
-	_ = app.Listen(":5000")
+
+	app.Listen(":5000")
 
 }
