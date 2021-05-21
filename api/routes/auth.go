@@ -22,7 +22,7 @@ func login(service auth.Service) fiber.Handler {
 			})
 		}
 
-		t, err := service.ReadUser(input)
+		res, err := service.ReadUser(input)
 		if err != nil {
 			if err.Error() == "error on email" {
 				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -69,7 +69,7 @@ func login(service auth.Service) fiber.Handler {
 		return c.JSON(&fiber.Map{
 			"status":  "success",
 			"message": "Success login",
-			"data":    t,
+			"data":    res,
 		})
 	}
 }

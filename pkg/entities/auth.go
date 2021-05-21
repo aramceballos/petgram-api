@@ -12,3 +12,10 @@ type LoginInput struct {
 	Identity string `json:"identity"`
 	Password string `json:"password"`
 }
+
+type Response struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
+}

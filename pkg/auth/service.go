@@ -12,7 +12,7 @@ import (
 )
 
 type Service interface {
-	ReadUser(entities.LoginInput) (string, error)
+	ReadUser(entities.LoginInput) (entities.Response, error)
 	InsertUser(*entities.User) error
 }
 
@@ -31,7 +31,7 @@ func NewService(r Repository) Service {
 	}
 }
 
-func (s *service) ReadUser(input entities.LoginInput) (string, error) {
+func (s *service) ReadUser(input entities.LoginInput) (entities.Response, error) {
 
 	var ud entities.User
 
@@ -40,21 +40,22 @@ func (s *service) ReadUser(input entities.LoginInput) (string, error) {
 
 	email, err := s.repository.ReadUserByEmail(identity)
 	if err != nil {
-		return "", errors.New("error on email")
+		return entities.Response{}, errors.New("error on email")
 	}
 
 	user, err := s.repository.ReadUserByUsername(identity)
 	if err != nil {
-		return "", errors.New("error on username")
+		return entities.Response{}, errors.New("error on username")
 	}
 
 	if email == nil && user == nil {
-		return "", errors.New("user not found")
+		return entities.Response{}, errors.New("user not found")
 	}
 
 	if email == nil {
 		ud = entities.User{
 			ID:       user.ID,
+			Name:     user.Name,
 			Username: user.Username,
 			Email:    user.Email,
 			Password: user.Password,
@@ -62,6 +63,7 @@ func (s *service) ReadUser(input entities.LoginInput) (string, error) {
 	} else {
 		ud = entities.User{
 			ID:       email.ID,
+			Name:     email.Name,
 			Username: email.Username,
 			Email:    email.Email,
 			Password: email.Password,
@@ -69,7 +71,7 @@ func (s *service) ReadUser(input entities.LoginInput) (string, error) {
 	}
 
 	if !CheckPasswordHash(pass, ud.Password) {
-		return "", errors.New("invalid password")
+		return entities.Response{}, errors.New("invalid password")
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -83,10 +85,17 @@ func (s *service) ReadUser(input entities.LoginInput) (string, error) {
 
 	t, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", errors.New("error signing token")
+		return entities.Response{}, errors.New("error signing token")
 	}
 
-	return t, err
+	res := entities.Response{
+		ID:       ud.ID,
+		Name:     ud.Name,
+		Username: ud.Username,
+		Token:    t,
+	}
+
+	return res, err
 }
 
 func (s *service) InsertUser(user *entities.User) error {
