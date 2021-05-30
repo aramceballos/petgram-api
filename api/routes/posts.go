@@ -12,6 +12,7 @@ import (
 func PostsRouter(app fiber.Router, service posts.Service) {
 	app.Get("/p", middleware.Protected(), getPosts(service))
 	app.Get("/p/:id", middleware.Protected(), getPost(service))
+	app.Post("/p/l", middleware.Protected(), likePost(service))
 }
 
 func getPosts(service posts.Service) fiber.Handler {
@@ -51,6 +52,42 @@ func getPost(service posts.Service) fiber.Handler {
 			"status":  "success",
 			"message": "Posts retrieved",
 			"posts":   posts,
+		})
+	}
+}
+
+func likePost(service posts.Service) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user_id, err := strconv.Atoi(c.Query("user_id"))
+		if err != nil {
+			return c.JSON(&fiber.Map{
+				"status":  "error",
+				"message": "Error with user_id query string",
+				"data":    nil,
+			})
+		}
+
+		post_id, err := strconv.Atoi(c.Query("post_id"))
+		if err != nil {
+			return c.JSON(&fiber.Map{
+				"status":  "error",
+				"message": "Error with post_id query string",
+				"data":    nil,
+			})
+		}
+
+		err = service.LikePost(user_id, post_id)
+		if err != nil {
+			return c.JSON(&fiber.Map{
+				"status":  "error",
+				"message": err,
+				"data":    nil,
+			})
+		}
+		return c.JSON(&fiber.Map{
+			"status":  "success",
+			"message": "Post liked",
+			"data":    nil,
 		})
 	}
 }

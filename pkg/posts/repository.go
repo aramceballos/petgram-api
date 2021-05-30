@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	ReadPosts() ([]entities.Post, error)
 	ReadPost(int) (entities.Post, error)
+	LikePost(int, int) error
 }
 
 type repo struct{}
@@ -48,6 +49,7 @@ func (*repo) ReadPosts() ([]entities.Post, error) {
 		ColumnExpr("post.*").
 		ColumnExpr("u.name, u.username, u.email").
 		Join("JOIN users AS u ON u.id = post.user_id").
+		Relation("Likes").
 		Select()
 	if err != nil {
 		fmt.Println(err)
@@ -80,10 +82,38 @@ func (*repo) ReadPost(id int) (entities.Post, error) {
 		ColumnExpr("u.name, u.username, u.email").
 		WherePK().
 		Join("JOIN users AS u ON u.id = post.user_id").
+		Relation("Likes").
 		Select()
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	return *p, err
+}
+
+func (*repo) LikePost(user_id int, post_id int) error {
+
+	dbUser := os.Getenv("DB_USER")
+	dbHost := os.Getenv("DB_HOST")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
+
+	opt, err := pg.ParseURL(url)
+	if err != nil {
+		fmt.Println("Unable to connect to database")
+		return err
+	}
+
+	db := pg.Connect(opt)
+	defer db.Close()
+
+	l := &entities.Like{UserID: user_id, PostID: post_id}
+	_, err = db.Model(l).Insert()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return err
 }

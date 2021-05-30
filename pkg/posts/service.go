@@ -1,10 +1,13 @@
 package posts
 
-import "github.com/aramceballos/petgram-api/pkg/entities"
+import (
+	"github.com/aramceballos/petgram-api/pkg/entities"
+)
 
 type Service interface {
 	FetchPosts() ([]entities.Post, error)
 	FetchPost(int) (entities.Post, error)
+	LikePost(int, int) error
 }
 
 type service struct {
@@ -27,4 +30,10 @@ func (s *service) FetchPost(id int) (entities.Post, error) {
 	post, err := s.repository.ReadPost(id)
 
 	return post, err
+}
+
+func (s *service) LikePost(user_id int, post_id int) error {
+	err := s.repository.LikePost(user_id, post_id)
+
+	return err
 }
