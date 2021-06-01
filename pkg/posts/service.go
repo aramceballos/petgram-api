@@ -8,6 +8,7 @@ type Service interface {
 	FetchPosts() ([]entities.Post, error)
 	FetchPost(int) (entities.Post, error)
 	LikePost(int, int) error
+	UnlikePost(int, int) error
 }
 
 type service struct {
@@ -34,6 +35,12 @@ func (s *service) FetchPost(id int) (entities.Post, error) {
 
 func (s *service) LikePost(user_id int, post_id int) error {
 	err := s.repository.LikePost(user_id, post_id)
+
+	return err
+}
+
+func (s *service) UnlikePost(user_id int, post_id int) error {
+	err := s.repository.UnlikePost(user_id, post_id)
 
 	return err
 }

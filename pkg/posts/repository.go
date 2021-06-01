@@ -12,6 +12,7 @@ type Repository interface {
 	ReadPosts() ([]entities.Post, error)
 	ReadPost(int) (entities.Post, error)
 	LikePost(int, int) error
+	UnlikePost(int, int) error
 }
 
 type repo struct{}
@@ -111,6 +112,33 @@ func (*repo) LikePost(user_id int, post_id int) error {
 
 	l := &entities.Like{UserID: user_id, PostID: post_id}
 	_, err = db.Model(l).Insert()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return err
+}
+
+func (*repo) UnlikePost(user_id int, post_id int) error {
+
+	dbUser := os.Getenv("DB_USER")
+	dbHost := os.Getenv("DB_HOST")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
+
+	opt, err := pg.ParseURL(url)
+	if err != nil {
+		fmt.Println("Unable to connect to database")
+		return err
+	}
+
+	db := pg.Connect(opt)
+	defer db.Close()
+
+	l := &entities.Like{}
+	_, err = db.Model(l).Where("user_id = ? AND post_id = ?", user_id, post_id).Delete()
 	if err != nil {
 		fmt.Println(err)
 	}
