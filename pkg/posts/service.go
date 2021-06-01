@@ -34,20 +34,20 @@ func (s *service) FetchPost(id int) (entities.Post, error) {
 	return post, err
 }
 
-func (s *service) LikePost(user_id int, post_id int) error {
-	err := s.repository.LikePost(user_id, post_id)
+func (s *service) LikePost(userId int, postId int) error {
+	err := s.repository.LikePost(userId, postId)
 
 	return err
 }
 
-func (s *service) UnlikePost(user_id int, post_id int) error {
-	err := s.repository.UnlikePost(user_id, post_id)
+func (s *service) UnlikePost(userId int, postId int) error {
+	err := s.repository.UnlikePost(userId, postId)
 
 	return err
 }
 
-func (s *service) FetchLikedPosts(user_id int) ([]entities.Post, error) {
-	liked_posts, err := s.repository.ReadLikedPosts(user_id)
+func (s *service) FetchLikedPosts(userId int) ([]entities.Post, error) {
+	likedPosts, err := s.repository.ReadLikedPosts(userId)
 
-	return liked_posts, err
+	return likedPosts, err
 }

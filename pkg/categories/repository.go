@@ -13,19 +13,11 @@ type Repository interface {
 	ReadCategory(int) (entities.Category, error)
 }
 
-type repo struct{}
-
-var instance *repo
-
-func NewPostgresRepository() Repository {
-	if instance == nil {
-		instance = &repo{}
-	}
-
-	return instance
+type repo struct {
+	url string
 }
 
-func (*repo) ReadCategories() ([]entities.Category, error) {
+func NewPostgresRepository() Repository {
 	dbUser := os.Getenv("DB_USER")
 	dbHost := os.Getenv("DB_HOST")
 	dbPassword := os.Getenv("DB_PASSWORD")
@@ -33,7 +25,13 @@ func (*repo) ReadCategories() ([]entities.Category, error) {
 
 	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
 
-	opt, err := pg.ParseURL(url)
+	return &repo{
+		url: url,
+	}
+}
+
+func (r *repo) ReadCategories() ([]entities.Category, error) {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return []entities.Category{}, err
@@ -48,15 +46,8 @@ func (*repo) ReadCategories() ([]entities.Category, error) {
 	return c, err
 }
 
-func (*repo) ReadCategory(id int) (entities.Category, error) {
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
-
-	opt, err := pg.ParseURL(url)
+func (r *repo) ReadCategory(id int) (entities.Category, error) {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return entities.Category{}, err

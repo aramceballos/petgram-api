@@ -87,9 +87,9 @@ func likePost(service posts.Service) fiber.Handler {
 		token := strings.Split(authorizationHeader, " ")[1]
 		claims, _ := extractClaims(token)
 
-		var user_id int = int(claims["user_id"].(float64))
+		var userId int = int(claims["user_id"].(float64))
 
-		post_id, err := strconv.Atoi(c.Query("post_id"))
+		postId, err := strconv.Atoi(c.Query("post_id"))
 		if err != nil {
 			return c.JSON(&fiber.Map{
 				"status":  "error",
@@ -98,7 +98,7 @@ func likePost(service posts.Service) fiber.Handler {
 			})
 		}
 
-		err = service.LikePost(user_id, post_id)
+		err = service.LikePost(userId, postId)
 		if err != nil {
 			return c.JSON(&fiber.Map{
 				"status":  "error",
@@ -120,7 +120,7 @@ func unlikePost(service posts.Service) fiber.Handler {
 		token := strings.Split(authorizationHeader, " ")[1]
 		claims, _ := extractClaims(token)
 
-		var user_id int = int(claims["user_id"].(float64))
+		var userId int = int(claims["user_id"].(float64))
 
 		post_id, err := strconv.Atoi(c.Query("post_id"))
 		if err != nil {
@@ -131,7 +131,7 @@ func unlikePost(service posts.Service) fiber.Handler {
 			})
 		}
 
-		err = service.UnlikePost(user_id, post_id)
+		err = service.UnlikePost(userId, post_id)
 		if err != nil {
 			return c.JSON(&fiber.Map{
 				"status":  "error",
@@ -153,20 +153,20 @@ func getLikedPosts(service posts.Service) fiber.Handler {
 		token := strings.Split(authorizationHeader, " ")[1]
 		claims, _ := extractClaims(token)
 
-		var user_id int = int(claims["user_id"].(float64))
+		var userId int = int(claims["user_id"].(float64))
 
-		liked_posts, err := service.FetchLikedPosts(user_id)
+		likedPosts, err := service.FetchLikedPosts(userId)
 		if err != nil {
 			return c.JSON(&fiber.Map{
 				"status":  "error",
 				"message": err,
-				"data":    liked_posts,
+				"data":    likedPosts,
 			})
 		}
 		return c.JSON(&fiber.Map{
 			"status":  "success",
 			"message": "Favorites retrieved",
-			"data":    liked_posts,
+			"data":    likedPosts,
 		})
 	}
 }

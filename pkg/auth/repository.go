@@ -14,19 +14,11 @@ type Repository interface {
 	CreateUser(*entities.User) error
 }
 
-type repo struct{}
-
-var instance *repo
+type repo struct {
+	url string
+}
 
 func NewPostgresRepository() Repository {
-	if instance == nil {
-		instance = &repo{}
-	}
-
-	return instance
-}
-
-func (*repo) ReadUserByEmail(e string) (*entities.User, error) {
 	dbUser := os.Getenv("DB_USER")
 	dbHost := os.Getenv("DB_HOST")
 	dbPassword := os.Getenv("DB_PASSWORD")
@@ -34,7 +26,13 @@ func (*repo) ReadUserByEmail(e string) (*entities.User, error) {
 
 	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
 
-	opt, err := pg.ParseURL(url)
+	return &repo{
+		url: url,
+	}
+}
+
+func (r *repo) ReadUserByEmail(email string) (*entities.User, error) {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return &entities.User{}, err
@@ -44,7 +42,7 @@ func (*repo) ReadUserByEmail(e string) (*entities.User, error) {
 	defer db.Close()
 
 	user := &entities.User{}
-	err = db.Model(user).Where("email = ?", e).Select()
+	err = db.Model(user).Where("email = ?", email).Select()
 	if err != nil {
 		if err.Error() == "pg: no rows in result set" {
 			return nil, nil
@@ -55,15 +53,8 @@ func (*repo) ReadUserByEmail(e string) (*entities.User, error) {
 	return user, err
 }
 
-func (*repo) ReadUserByUsername(u string) (*entities.User, error) {
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
-
-	opt, err := pg.ParseURL(url)
+func (r *repo) ReadUserByUsername(username string) (*entities.User, error) {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return &entities.User{}, err
@@ -73,7 +64,7 @@ func (*repo) ReadUserByUsername(u string) (*entities.User, error) {
 	defer db.Close()
 
 	user := &entities.User{}
-	err = db.Model(user).Where("username = ?", u).Select()
+	err = db.Model(user).Where("username = ?", username).Select()
 	if err != nil {
 		if err.Error() == "pg: no rows in result set" {
 			return nil, nil
@@ -84,16 +75,8 @@ func (*repo) ReadUserByUsername(u string) (*entities.User, error) {
 	return user, err
 }
 
-func (*repo) CreateUser(user *entities.User) error {
-
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
-
-	opt, err := pg.ParseURL(url)
+func (r *repo) CreateUser(user *entities.User) error {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return err

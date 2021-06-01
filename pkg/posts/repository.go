@@ -16,20 +16,11 @@ type Repository interface {
 	ReadLikedPosts(int) ([]entities.Post, error)
 }
 
-type repo struct{}
-
-var instance *repo
-
-func NewPostgresRepository() Repository {
-	if instance == nil {
-		instance = &repo{}
-	}
-
-	return instance
+type repo struct {
+	url string
 }
 
-func (*repo) ReadPosts() ([]entities.Post, error) {
-
+func NewPostgresRepository() Repository {
 	dbUser := os.Getenv("DB_USER")
 	dbHost := os.Getenv("DB_HOST")
 	dbPassword := os.Getenv("DB_PASSWORD")
@@ -37,7 +28,13 @@ func (*repo) ReadPosts() ([]entities.Post, error) {
 
 	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
 
-	opt, err := pg.ParseURL(url)
+	return &repo{
+		url: url,
+	}
+}
+
+func (r *repo) ReadPosts() ([]entities.Post, error) {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return []entities.Post{}, err
@@ -60,16 +57,8 @@ func (*repo) ReadPosts() ([]entities.Post, error) {
 	return p, err
 }
 
-func (*repo) ReadPost(id int) (entities.Post, error) {
-
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
-
-	opt, err := pg.ParseURL(url)
+func (r *repo) ReadPost(id int) (entities.Post, error) {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return entities.Post{}, err
@@ -93,16 +82,8 @@ func (*repo) ReadPost(id int) (entities.Post, error) {
 	return *p, err
 }
 
-func (*repo) LikePost(user_id int, post_id int) error {
-
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
-
-	opt, err := pg.ParseURL(url)
+func (r *repo) LikePost(userId int, postId int) error {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return err
@@ -111,7 +92,7 @@ func (*repo) LikePost(user_id int, post_id int) error {
 	db := pg.Connect(opt)
 	defer db.Close()
 
-	l := &entities.Like{UserID: user_id, PostID: post_id}
+	l := &entities.Like{UserID: userId, PostID: postId}
 	_, err = db.Model(l).Insert()
 	if err != nil {
 		fmt.Println(err)
@@ -120,16 +101,8 @@ func (*repo) LikePost(user_id int, post_id int) error {
 	return err
 }
 
-func (*repo) UnlikePost(user_id int, post_id int) error {
-
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
-
-	opt, err := pg.ParseURL(url)
+func (r *repo) UnlikePost(userId int, postId int) error {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return err
@@ -139,7 +112,7 @@ func (*repo) UnlikePost(user_id int, post_id int) error {
 	defer db.Close()
 
 	l := &entities.Like{}
-	_, err = db.Model(l).Where("user_id = ? AND post_id = ?", user_id, post_id).Delete()
+	_, err = db.Model(l).Where("user_id = ? AND post_id = ?", userId, postId).Delete()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -147,16 +120,8 @@ func (*repo) UnlikePost(user_id int, post_id int) error {
 	return err
 }
 
-func (*repo) ReadLikedPosts(user_id int) ([]entities.Post, error) {
-
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
-
-	opt, err := pg.ParseURL(url)
+func (r *repo) ReadLikedPosts(userId int) ([]entities.Post, error) {
+	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return []entities.Post{}, err
@@ -169,7 +134,7 @@ func (*repo) ReadLikedPosts(user_id int) ([]entities.Post, error) {
 	err = db.Model(&p).
 		ColumnExpr("post.*").
 		Join("LEFT JOIN likes AS l ON l.post_id = post.id").
-		Where("l.user_id = ?", user_id).
+		Where("l.user_id = ?", userId).
 		Select()
 	if err != nil {
 		fmt.Println(err)
