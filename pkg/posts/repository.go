@@ -13,6 +13,7 @@ type Repository interface {
 	ReadPost(int) (entities.Post, error)
 	LikePost(int, int) error
 	UnlikePost(int, int) error
+	ReadLikedPosts(int) ([]entities.Post, error)
 }
 
 type repo struct{}
@@ -144,4 +145,35 @@ func (*repo) UnlikePost(user_id int, post_id int) error {
 	}
 
 	return err
+}
+
+func (*repo) ReadLikedPosts(user_id int) ([]entities.Post, error) {
+
+	dbUser := os.Getenv("DB_USER")
+	dbHost := os.Getenv("DB_HOST")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
+
+	opt, err := pg.ParseURL(url)
+	if err != nil {
+		fmt.Println("Unable to connect to database")
+		return []entities.Post{}, err
+	}
+
+	db := pg.Connect(opt)
+	defer db.Close()
+
+	var p []entities.Post
+	err = db.Model(&p).
+		ColumnExpr("post.*").
+		Join("LEFT JOIN likes AS l ON l.post_id = post.id").
+		Where("l.user_id = ?", user_id).
+		Select()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return p, err
 }

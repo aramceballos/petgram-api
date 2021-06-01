@@ -2,18 +2,42 @@ package routes
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/aramceballos/petgram-api/api/middleware"
 	"github.com/aramceballos/petgram-api/pkg/posts"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 )
 
+func extractClaims(tokenStr string) (jwt.MapClaims, bool) {
+	secret := os.Getenv("SECRET")
+	hmacSecret := []byte(secret)
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		return hmacSecret, nil
+	})
+
+	if err != nil {
+		return nil, false
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, true
+	} else {
+		log.Printf("Invalid JWT Token")
+		return nil, false
+	}
+}
+
 func PostsRouter(app fiber.Router, service posts.Service) {
 	app.Get("/p", middleware.Protected(), getPosts(service))
-	app.Get("/p/:id", middleware.Protected(), getPost(service))
+	app.Get("/p/individual/:id", middleware.Protected(), getPost(service))
 	app.Post("/p/l", middleware.Protected(), likePost(service))
 	app.Post("/p/ul", middleware.Protected(), unlikePost(service))
+	app.Get("/p/f", middleware.Protected(), getLikedPosts(service))
 }
 
 func getPosts(service posts.Service) fiber.Handler {
@@ -59,14 +83,11 @@ func getPost(service posts.Service) fiber.Handler {
 
 func likePost(service posts.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user_id, err := strconv.Atoi(c.Query("user_id"))
-		if err != nil {
-			return c.JSON(&fiber.Map{
-				"status":  "error",
-				"message": "Error with user_id query string",
-				"data":    nil,
-			})
-		}
+		authorizationHeader := c.Get("Authorization")
+		token := strings.Split(authorizationHeader, " ")[1]
+		claims, _ := extractClaims(token)
+
+		var user_id int = int(claims["user_id"].(float64))
 
 		post_id, err := strconv.Atoi(c.Query("post_id"))
 		if err != nil {
@@ -95,14 +116,11 @@ func likePost(service posts.Service) fiber.Handler {
 
 func unlikePost(service posts.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user_id, err := strconv.Atoi(c.Query("user_id"))
-		if err != nil {
-			return c.JSON(&fiber.Map{
-				"status":  "error",
-				"message": "Error with user_id query string",
-				"data":    nil,
-			})
-		}
+		authorizationHeader := c.Get("Authorization")
+		token := strings.Split(authorizationHeader, " ")[1]
+		claims, _ := extractClaims(token)
+
+		var user_id int = int(claims["user_id"].(float64))
 
 		post_id, err := strconv.Atoi(c.Query("post_id"))
 		if err != nil {
@@ -125,6 +143,30 @@ func unlikePost(service posts.Service) fiber.Handler {
 			"status":  "success",
 			"message": "Post unliked",
 			"data":    nil,
+		})
+	}
+}
+
+func getLikedPosts(service posts.Service) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		authorizationHeader := c.Get("Authorization")
+		token := strings.Split(authorizationHeader, " ")[1]
+		claims, _ := extractClaims(token)
+
+		var user_id int = int(claims["user_id"].(float64))
+
+		liked_posts, err := service.FetchLikedPosts(user_id)
+		if err != nil {
+			return c.JSON(&fiber.Map{
+				"status":  "error",
+				"message": err,
+				"data":    liked_posts,
+			})
+		}
+		return c.JSON(&fiber.Map{
+			"status":  "success",
+			"message": "Favorites retrieved",
+			"data":    liked_posts,
 		})
 	}
 }
