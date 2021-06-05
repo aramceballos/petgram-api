@@ -65,18 +65,18 @@ func getPost(service posts.Service) fiber.Handler {
 			fmt.Println("Error casting id to int")
 		}
 
-		posts, err := service.FetchPost(id)
+		post, err := service.FetchPost(id)
 		if err != nil {
-			_ = c.JSON(&fiber.Map{
+			return c.JSON(&fiber.Map{
 				"status":  "error",
 				"message": err,
-				"posts":   posts,
+				"data":    nil,
 			})
 		}
 		return c.JSON(&fiber.Map{
 			"status":  "success",
 			"message": "Posts retrieved",
-			"posts":   posts,
+			"data":    post,
 		})
 	}
 }
