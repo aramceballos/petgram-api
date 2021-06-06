@@ -105,6 +105,19 @@ func (s *service) InsertUser(user *entities.User) error {
 	}
 	user.Password = string(hashedPass)
 
+	e := user.Email
+	u := user.Username
+
+	email, _ := s.repository.ReadUserByEmail(e)
+	if email != nil {
+		return errors.New("user already exists")
+	}
+
+	userName, _ := s.repository.ReadUserByUsername(u)
+	if userName != nil {
+		return errors.New("user already exists")
+	}
+
 	err = s.repository.CreateUser(user)
 
 	return err
