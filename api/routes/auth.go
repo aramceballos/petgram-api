@@ -85,7 +85,7 @@ func signup(service auth.Service) fiber.Handler {
 		err := service.InsertUser(user)
 
 		if err != nil {
-			return c.JSON(fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"status":  "error",
 				"message": err.Error(),
 				"data":    nil,
