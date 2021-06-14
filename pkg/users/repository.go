@@ -9,7 +9,7 @@ import (
 )
 
 type Repository interface {
-	ReadUser(int) (entities.User, error)
+	ReadUser(string) (entities.User, error)
 }
 
 type repo struct {
@@ -29,7 +29,7 @@ func NewPostgresRepository() Repository {
 	}
 }
 
-func (r *repo) ReadUser(id int) (entities.User, error) {
+func (r *repo) ReadUser(username string) (entities.User, error) {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
 		fmt.Println("Unable to connect to database")
@@ -39,9 +39,9 @@ func (r *repo) ReadUser(id int) (entities.User, error) {
 	db := pg.Connect(opt)
 	defer db.Close()
 
-	u := &entities.User{ID: id}
+	u := &entities.User{Username: username}
 	err = db.Model(u).
-		WherePK().
+		Where("username = ?", u.Username).
 		Select()
 	if err != nil {
 		fmt.Println(err)

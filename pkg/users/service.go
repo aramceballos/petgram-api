@@ -5,7 +5,7 @@ import (
 )
 
 type Service interface {
-	FetchUser(int) (entities.User, error)
+	FetchUser(string) (entities.User, error)
 }
 
 type service struct {
@@ -18,8 +18,8 @@ func NewService(r Repository) Service {
 	}
 }
 
-func (s *service) FetchUser(id int) (entities.User, error) {
-	user, err := s.repository.ReadUser(id)
+func (s *service) FetchUser(username string) (entities.User, error) {
+	user, err := s.repository.ReadUser(username)
 
 	return user, err
 }

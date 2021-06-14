@@ -1,9 +1,6 @@
 package routes
 
 import (
-	"fmt"
-	"strconv"
-
 	"github.com/aramceballos/petgram-api/api/middleware"
 	"github.com/aramceballos/petgram-api/pkg/users"
 	"github.com/gofiber/fiber/v2"
@@ -15,12 +12,17 @@ func UsersRouter(app fiber.Router, service users.Service) {
 
 func getUser(service users.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		id, err := strconv.Atoi(c.Query("id"))
-		if err != nil {
-			fmt.Println("Error casting id to int")
+
+		username := c.Query("username")
+		if username == "" {
+			return c.JSON(&fiber.Map{
+				"status":  "error",
+				"message": "username was not provided",
+				"data":    nil,
+			})
 		}
 
-		user, err := service.FetchUser(id)
+		user, err := service.FetchUser(username)
 		if err != nil {
 			return c.JSON(&fiber.Map{
 				"status":  "error",
