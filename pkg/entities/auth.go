@@ -5,7 +5,7 @@ type User struct {
 	Email    string `json:"email"`
 	Name     string `json:"name"`
 	Username string `json:"username"`
-	Password string `json:"password"`
+	Password string `json:"-"`
 }
 
 type LoginInput struct {
