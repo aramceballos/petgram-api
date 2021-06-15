@@ -10,6 +10,7 @@ import (
 
 type Repository interface {
 	ReadPosts() ([]entities.Post, error)
+	ReadPostsByUserID(int) ([]entities.Post, error)
 	ReadPost(int) (entities.Post, error)
 	LikePost(int, int) error
 	UnlikePost(int, int) error
@@ -48,6 +49,31 @@ func (r *repo) ReadPosts() ([]entities.Post, error) {
 		ColumnExpr("post.*").
 		ColumnExpr("u.name, u.username, u.email").
 		Join("JOIN users AS u ON u.id = post.user_id").
+		Relation("Likes").
+		Select()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return p, err
+}
+
+func (r *repo) ReadPostsByUserID(userId int) ([]entities.Post, error) {
+	opt, err := pg.ParseURL(r.url)
+	if err != nil {
+		fmt.Println("Unable to connect to database")
+		return []entities.Post{}, err
+	}
+
+	db := pg.Connect(opt)
+	defer db.Close()
+
+	var p []entities.Post
+	err = db.Model(&p).
+		ColumnExpr("post.*").
+		ColumnExpr("u.name, u.username, u.email").
+		Join("JOIN users AS u ON u.id = post.user_id").
+		Where("post.user_id = ?", userId).
 		Relation("Likes").
 		Select()
 	if err != nil {

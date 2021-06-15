@@ -6,6 +6,7 @@ import (
 
 type Service interface {
 	FetchPosts() ([]entities.Post, error)
+	FetchPostsByUserID(int) ([]entities.Post, error)
 	FetchPost(int) (entities.Post, error)
 	LikePost(int, int) error
 	UnlikePost(int, int) error
@@ -24,6 +25,12 @@ func NewService(r Repository) Service {
 
 func (s *service) FetchPosts() ([]entities.Post, error) {
 	posts, err := s.repository.ReadPosts()
+
+	return posts, err
+}
+
+func (s *service) FetchPostsByUserID(userId int) ([]entities.Post, error) {
+	posts, err := s.repository.ReadPostsByUserID(userId)
 
 	return posts, err
 }
