@@ -34,7 +34,6 @@ func extractClaims(tokenStr string) (jwt.MapClaims, bool) {
 
 func PostsRouter(app fiber.Router, service posts.Service) {
 	app.Get("/p", middleware.Protected(), getPosts(service))
-	app.Get("/p/:userId", middleware.Protected(), getPostsByUserID(service))
 	app.Get("/p/individual/:id", middleware.Protected(), getPost(service))
 	app.Post("/p/l", middleware.Protected(), likePost(service))
 	app.Post("/p/ul", middleware.Protected(), unlikePost(service))
@@ -43,30 +42,25 @@ func PostsRouter(app fiber.Router, service posts.Service) {
 
 func getPosts(service posts.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		posts, err := service.FetchPosts()
-		if err != nil {
-			_ = c.JSON(&fiber.Map{
-				"status":  "error",
-				"message": err,
+		userId, err := strconv.Atoi(c.Query("user_id"))
+
+		if err == nil {
+			posts, err := service.FetchPostsByUserID(userId)
+			if err != nil {
+				_ = c.JSON(&fiber.Map{
+					"status":  "error",
+					"message": err,
+					"data":    posts,
+				})
+			}
+			return c.JSON(&fiber.Map{
+				"status":  "success",
+				"message": "Posts retrieved",
 				"data":    posts,
 			})
 		}
-		return c.JSON(&fiber.Map{
-			"status":  "success",
-			"message": "Posts retrieved",
-			"data":    posts,
-		})
-	}
-}
 
-func getPostsByUserID(service posts.Service) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		userId, err := strconv.Atoi(c.Params("userId"))
-		if err != nil {
-			fmt.Println("Error casting userId to int")
-		}
-
-		posts, err := service.FetchPostsByUserID(userId)
+		posts, err := service.FetchPosts()
 		if err != nil {
 			_ = c.JSON(&fiber.Map{
 				"status":  "error",
