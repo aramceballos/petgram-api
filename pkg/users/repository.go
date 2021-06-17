@@ -10,6 +10,7 @@ import (
 
 type Repository interface {
 	ReadUser(string) (entities.User, error)
+	ReadUserById(int) (entities.User, error)
 }
 
 type repo struct {
@@ -42,6 +43,27 @@ func (r *repo) ReadUser(username string) (entities.User, error) {
 	u := &entities.User{Username: username}
 	err = db.Model(u).
 		Where("username = ?", u.Username).
+		Select()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return *u, err
+}
+
+func (r *repo) ReadUserById(id int) (entities.User, error) {
+	opt, err := pg.ParseURL(r.url)
+	if err != nil {
+		fmt.Println("Unable to connect to database")
+		return entities.User{}, err
+	}
+
+	db := pg.Connect(opt)
+	defer db.Close()
+
+	u := &entities.User{ID: id}
+	err = db.Model(u).
+		WherePK().
 		Select()
 	if err != nil {
 		fmt.Println(err)

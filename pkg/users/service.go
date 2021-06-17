@@ -6,6 +6,7 @@ import (
 
 type Service interface {
 	FetchUser(string) (entities.User, error)
+	FetchUserById(int) (entities.User, error)
 }
 
 type service struct {
@@ -20,6 +21,12 @@ func NewService(r Repository) Service {
 
 func (s *service) FetchUser(username string) (entities.User, error) {
 	user, err := s.repository.ReadUser(username)
+
+	return user, err
+}
+
+func (s *service) FetchUserById(id int) (entities.User, error) {
+	user, err := s.repository.ReadUserById(id)
 
 	return user, err
 }
