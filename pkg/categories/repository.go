@@ -17,6 +17,8 @@ type repo struct {
 	url string
 }
 
+var postgresRepo *repo
+
 func NewPostgresRepository() Repository {
 	dbUser := os.Getenv("DB_USER")
 	dbHost := os.Getenv("DB_HOST")
@@ -25,9 +27,13 @@ func NewPostgresRepository() Repository {
 
 	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
 
-	return &repo{
-		url: url,
+	if postgresRepo == nil {
+		postgresRepo = &repo{
+			url: url,
+		}
 	}
+
+	return postgresRepo
 }
 
 func (r *repo) ReadCategories() ([]entities.Category, error) {
