@@ -32,12 +32,14 @@ func extractClaims(tokenStr string) (jwt.MapClaims, bool) {
 	}
 }
 
-func PostsRouter(app fiber.Router, service posts.Service) {
-	app.Get("/posts", middleware.Protected(), getPosts(service))
-	app.Get("/post/:id", middleware.Protected(), getPost(service))
-	app.Post("/like", middleware.Protected(), likePost(service))
-	app.Post("/unlike", middleware.Protected(), unlikePost(service))
-	app.Get("/posts/favorites", middleware.Protected(), getLikedPosts(service))
+func PostsRouter(app fiber.Router) {
+	postsService := posts.NewService()
+
+	app.Get("/posts", middleware.Protected(), getPosts(postsService))
+	app.Get("/post/:id", middleware.Protected(), getPost(postsService))
+	app.Post("/like", middleware.Protected(), likePost(postsService))
+	app.Post("/unlike", middleware.Protected(), unlikePost(postsService))
+	app.Get("/posts/favorites", middleware.Protected(), getLikedPosts(postsService))
 }
 
 func getPosts(service posts.Service) fiber.Handler {

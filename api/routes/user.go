@@ -8,8 +8,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func UsersRouter(app fiber.Router, service users.Service) {
-	app.Get("/user", middleware.Protected(), getUser(service))
+func UsersRouter(app fiber.Router) {
+	usersService := users.NewService()
+
+	app.Get("/user", middleware.Protected(), getUser(usersService))
 }
 
 func getUser(service users.Service) fiber.Handler {

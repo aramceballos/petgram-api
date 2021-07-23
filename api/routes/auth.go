@@ -6,9 +6,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func AuthRouter(app fiber.Router, service auth.Service) {
-	app.Post("/login", login(service))
-	app.Post("/signup", signup(service))
+func AuthRouter(app fiber.Router) {
+	authService := auth.NewService()
+
+	app.Post("/login", login(authService))
+	app.Post("/signup", signup(authService))
 }
 
 func login(service auth.Service) fiber.Handler {

@@ -9,9 +9,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func CategoriesRouter(app fiber.Router, service categories.Service) {
-	app.Get("/categories", middleware.Protected(), getCategories(service))
-	app.Get("/category/:id", middleware.Protected(), getCategory(service))
+func CategoriesRouter(app fiber.Router) {
+	categoriesService := categories.NewService()
+
+	app.Get("/categories", middleware.Protected(), getCategories(categoriesService))
+	app.Get("/category/:id", middleware.Protected(), getCategory(categoriesService))
 }
 
 func getCategories(service categories.Service) fiber.Handler {

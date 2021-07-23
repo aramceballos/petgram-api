@@ -25,9 +25,11 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func NewService(r Repository) Service {
+func NewService() Service {
+	postgresRepository := NewPostgresRepository()
+
 	return &service{
-		repository: r,
+		repository: postgresRepository,
 	}
 }
 

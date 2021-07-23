@@ -11,9 +11,11 @@ type service struct {
 	repository Repository
 }
 
-func NewService(r Repository) Service {
+func NewService() Service {
+	postgresRepository := NewPostgresRepository()
+
 	return &service{
-		repository: r,
+		repository: postgresRepository,
 	}
 }
 
