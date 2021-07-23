@@ -9,7 +9,7 @@ import (
 )
 
 func UsersRouter(app fiber.Router, service users.Service) {
-	app.Get("/u", middleware.Protected(), getUser(service))
+	app.Get("/user", middleware.Protected(), getUser(service))
 }
 
 func getUser(service users.Service) fiber.Handler {

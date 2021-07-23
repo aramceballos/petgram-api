@@ -10,8 +10,8 @@ import (
 )
 
 func CategoriesRouter(app fiber.Router, service categories.Service) {
-	app.Get("/c", middleware.Protected(), getCategories(service))
-	app.Get("/c/:id", middleware.Protected(), getCategory(service))
+	app.Get("/categories", middleware.Protected(), getCategories(service))
+	app.Get("/category/:id", middleware.Protected(), getCategory(service))
 }
 
 func getCategories(service categories.Service) fiber.Handler {
