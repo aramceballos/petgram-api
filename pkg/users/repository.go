@@ -1,7 +1,8 @@
 package users
 
 import (
-	"fmt"
+	"errors"
+	"log"
 	"os"
 
 	"github.com/aramceballos/petgram-api/pkg/entities"
@@ -39,8 +40,8 @@ func NewPostgresRepository() Repository {
 func (r *repo) ReadUser(username string) (entities.User, error) {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return entities.User{}, err
+		log.Println("error while parsing pg url")
+		return entities.User{}, errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -50,8 +51,9 @@ func (r *repo) ReadUser(username string) (entities.User, error) {
 	err = db.Model(u).
 		Where("username = ?", u.Username).
 		Select()
+
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return *u, err
@@ -60,8 +62,8 @@ func (r *repo) ReadUser(username string) (entities.User, error) {
 func (r *repo) ReadUserById(id int) (entities.User, error) {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return entities.User{}, err
+		log.Println("error while parsing pg url")
+		return entities.User{}, errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -71,8 +73,9 @@ func (r *repo) ReadUserById(id int) (entities.User, error) {
 	err = db.Model(u).
 		WherePK().
 		Select()
+
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return *u, err

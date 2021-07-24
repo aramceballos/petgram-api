@@ -1,7 +1,8 @@
 package posts
 
 import (
-	"fmt"
+	"errors"
+	"log"
 	"os"
 
 	"github.com/aramceballos/petgram-api/pkg/entities"
@@ -43,8 +44,8 @@ func NewPostgresRepository() Repository {
 func (r *repo) ReadPosts() ([]entities.Post, error) {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return []entities.Post{}, err
+		log.Println("error while parsing pg url")
+		return []entities.Post{}, errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -57,8 +58,9 @@ func (r *repo) ReadPosts() ([]entities.Post, error) {
 		Join("JOIN users AS u ON u.id = post.user_id").
 		Relation("Likes").
 		Select()
+
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return p, err
@@ -67,8 +69,8 @@ func (r *repo) ReadPosts() ([]entities.Post, error) {
 func (r *repo) ReadPostsByUserID(userId int) ([]entities.Post, error) {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return []entities.Post{}, err
+		log.Println("error while parsing pg url")
+		return []entities.Post{}, errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -82,8 +84,13 @@ func (r *repo) ReadPostsByUserID(userId int) ([]entities.Post, error) {
 		Where("post.user_id = ?", userId).
 		Relation("Likes").
 		Select()
+
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
+	}
+
+	if len(p) == 0 {
+		return []entities.Post{}, errors.New("there are not posts from the given user")
 	}
 
 	return p, err
@@ -92,8 +99,8 @@ func (r *repo) ReadPostsByUserID(userId int) ([]entities.Post, error) {
 func (r *repo) ReadPost(id int) (entities.Post, error) {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return entities.Post{}, err
+		log.Println("error while parsing pg url")
+		return entities.Post{}, errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -107,8 +114,9 @@ func (r *repo) ReadPost(id int) (entities.Post, error) {
 		Join("JOIN users AS u ON u.id = post.user_id").
 		Relation("Likes").
 		Select()
+
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return *p, err
@@ -117,8 +125,8 @@ func (r *repo) ReadPost(id int) (entities.Post, error) {
 func (r *repo) LikePost(userId int, postId int) error {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return err
+		log.Println("error while parsing pg url")
+		return errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -126,8 +134,9 @@ func (r *repo) LikePost(userId int, postId int) error {
 
 	l := &entities.Like{UserID: userId, PostID: postId}
 	_, err = db.Model(l).Insert()
+
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return err
@@ -136,8 +145,8 @@ func (r *repo) LikePost(userId int, postId int) error {
 func (r *repo) UnlikePost(userId int, postId int) error {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return err
+		log.Println("error while parsing pg url")
+		return errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -145,8 +154,9 @@ func (r *repo) UnlikePost(userId int, postId int) error {
 
 	l := &entities.Like{}
 	_, err = db.Model(l).Where("user_id = ? AND post_id = ?", userId, postId).Delete()
+
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return err
@@ -155,8 +165,8 @@ func (r *repo) UnlikePost(userId int, postId int) error {
 func (r *repo) ReadLikedPosts(userId int) ([]entities.Post, error) {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return []entities.Post{}, err
+		log.Println("error while parsing pg url")
+		return []entities.Post{}, errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -168,8 +178,9 @@ func (r *repo) ReadLikedPosts(userId int) ([]entities.Post, error) {
 		Join("LEFT JOIN likes AS l ON l.post_id = post.id").
 		Where("l.user_id = ?", userId).
 		Select()
+
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return p, err

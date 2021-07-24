@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/aramceballos/petgram-api/pkg/auth"
 	"github.com/aramceballos/petgram-api/pkg/entities"
 	"github.com/gofiber/fiber/v2"
@@ -17,9 +19,9 @@ func login(service auth.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var input entities.LoginInput
 		if err := c.BodyParser(&input); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 				"status":  "error",
-				"message": "Error on login request",
+				"message": "invalid body",
 				"data":    nil,
 			})
 		}
@@ -27,7 +29,7 @@ func login(service auth.Service) fiber.Handler {
 		res, err := service.ReadUser(input)
 		if err != nil {
 			if err.Error() == "error on email" {
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 					"status":  "error",
 					"message": "Error on email",
 					"data":    nil,
@@ -35,7 +37,7 @@ func login(service auth.Service) fiber.Handler {
 			}
 
 			if err.Error() == "error on username" {
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 					"status":  "error",
 					"message": "Error on username",
 					"data":    nil,
@@ -43,7 +45,7 @@ func login(service auth.Service) fiber.Handler {
 			}
 
 			if err.Error() == "user not found" {
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 					"status":  "error",
 					"message": "User not found",
 					"data":    nil,
@@ -51,7 +53,7 @@ func login(service auth.Service) fiber.Handler {
 			}
 
 			if err.Error() == "invalid password" {
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 					"status":  "error",
 					"message": "Invalid password",
 					"data":    nil,
@@ -59,12 +61,12 @@ func login(service auth.Service) fiber.Handler {
 			}
 
 			if err.Error() == "error signing token" {
-				return c.SendStatus(fiber.StatusInternalServerError)
+				return c.SendStatus(http.StatusInternalServerError)
 			}
 
 			return c.JSON(&fiber.Map{
 				"status":  "error",
-				"message": err,
+				"message": err.Error(),
 				"data":    nil,
 			})
 		}
@@ -87,14 +89,14 @@ func signup(service auth.Service) fiber.Handler {
 		err := service.InsertUser(user)
 
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 				"status":  "error",
 				"message": err.Error(),
 				"data":    nil,
 			})
 		}
 
-		return c.JSON(fiber.Map{
+		return c.Status(http.StatusCreated).JSON(fiber.Map{
 			"status":  "success",
 			"message": "User created",
 			"data":    nil,

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"net/http"
 	"strconv"
 
 	"github.com/aramceballos/petgram-api/api/middleware"
@@ -23,9 +24,9 @@ func getUser(service users.Service) fiber.Handler {
 		if username != "" {
 			user, err := service.FetchUser(username)
 			if err != nil {
-				return c.JSON(&fiber.Map{
+				return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 					"status":  "error",
-					"message": err,
+					"message": err.Error(),
 					"data":    nil,
 				})
 			}
@@ -42,7 +43,7 @@ func getUser(service users.Service) fiber.Handler {
 			if err != nil {
 				return c.JSON(&fiber.Map{
 					"status":  "error",
-					"message": err,
+					"message": err.Error(),
 					"data":    nil,
 				})
 			}
@@ -54,7 +55,7 @@ func getUser(service users.Service) fiber.Handler {
 			})
 		}
 
-		return c.JSON(&fiber.Map{
+		return c.Status(http.StatusBadRequest).JSON(&fiber.Map{
 			"status":  "error",
 			"message": "username or user_id were not provided not provided",
 			"data":    nil,

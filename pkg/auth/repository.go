@@ -1,7 +1,8 @@
 package auth
 
 import (
-	"fmt"
+	"errors"
+	"log"
 	"os"
 
 	"github.com/aramceballos/petgram-api/pkg/entities"
@@ -40,8 +41,8 @@ func NewPostgresRepository() Repository {
 func (r *repo) ReadUserByEmail(email string) (*entities.User, error) {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return &entities.User{}, err
+		log.Println("error while parsing pg url")
+		return &entities.User{}, errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -49,11 +50,9 @@ func (r *repo) ReadUserByEmail(email string) (*entities.User, error) {
 
 	user := &entities.User{}
 	err = db.Model(user).Where("email = ?", email).Select()
+
 	if err != nil {
-		if err.Error() == "pg: no rows in result set" {
-			return nil, nil
-		}
-		return nil, err
+		log.Println(err)
 	}
 
 	return user, err
@@ -62,8 +61,8 @@ func (r *repo) ReadUserByEmail(email string) (*entities.User, error) {
 func (r *repo) ReadUserByUsername(username string) (*entities.User, error) {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return &entities.User{}, err
+		log.Println("error while parsing pg url")
+		return &entities.User{}, errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
@@ -71,11 +70,9 @@ func (r *repo) ReadUserByUsername(username string) (*entities.User, error) {
 
 	user := &entities.User{}
 	err = db.Model(user).Where("username = ?", username).Select()
+
 	if err != nil {
-		if err.Error() == "pg: no rows in result set" {
-			return nil, nil
-		}
-		return nil, err
+		log.Println(err)
 	}
 
 	return user, err
@@ -84,19 +81,19 @@ func (r *repo) ReadUserByUsername(username string) (*entities.User, error) {
 func (r *repo) CreateUser(user *entities.User) error {
 	opt, err := pg.ParseURL(r.url)
 	if err != nil {
-		fmt.Println("Unable to connect to database")
-		return err
+		log.Println("error while parsing pg url")
+		return errors.New("error on db connection")
 	}
 
 	db := pg.Connect(opt)
 	defer db.Close()
-	result, err := db.Model(user).
-		Insert()
-	if err != nil {
-		fmt.Println(err)
-	}
 
-	fmt.Println(result)
+	_, err = db.Model(user).
+		Insert()
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	return err
 }

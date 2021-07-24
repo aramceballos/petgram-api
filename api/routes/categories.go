@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/aramceballos/petgram-api/api/middleware"
@@ -20,16 +20,16 @@ func getCategories(service categories.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		categories, err := service.FetchCategories()
 		if err != nil {
-			_ = c.JSON(&fiber.Map{
+			return c.Status(http.StatusBadRequest).JSON(&fiber.Map{
 				"status":  "error",
-				"message": err,
-				"data":    categories,
+				"message": err.Error(),
+				"data":    nil,
 			})
 		}
 		return c.JSON(&fiber.Map{
 			"status":  "success",
+			"message": "Categories retrieved",
 			"data":    categories,
-			"message": "Posts retrieved",
 		})
 	}
 }
@@ -38,20 +38,25 @@ func getCategory(service categories.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("id"))
 		if err != nil {
-			fmt.Println("Error casting id to int")
+			return c.Status(http.StatusBadRequest).JSON(&fiber.Map{
+				"status":  "error",
+				"message": "invalid id",
+				"data":    nil,
+			})
 		}
 
 		category, err := service.FetchCategory(id)
 		if err != nil {
-			_ = c.JSON(&fiber.Map{
+			return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 				"status":  "error",
-				"message": err,
-				"data":    category,
+				"message": err.Error(),
+				"data":    nil,
 			})
 		}
+
 		return c.JSON(&fiber.Map{
 			"status":  "success",
-			"message": "Posts retrieved",
+			"message": "Category retrieved",
 			"data":    category,
 		})
 	}

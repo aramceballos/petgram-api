@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -49,10 +49,10 @@ func getPosts(service posts.Service) fiber.Handler {
 		if err == nil {
 			posts, err := service.FetchPostsByUserID(userId)
 			if err != nil {
-				_ = c.JSON(&fiber.Map{
+				return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 					"status":  "error",
-					"message": err,
-					"data":    posts,
+					"message": err.Error(),
+					"data":    nil,
 				})
 			}
 			return c.JSON(&fiber.Map{
@@ -64,10 +64,10 @@ func getPosts(service posts.Service) fiber.Handler {
 
 		posts, err := service.FetchPosts()
 		if err != nil {
-			_ = c.JSON(&fiber.Map{
+			return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 				"status":  "error",
-				"message": err,
-				"data":    posts,
+				"message": err.Error(),
+				"data":    nil,
 			})
 		}
 		return c.JSON(&fiber.Map{
@@ -82,17 +82,22 @@ func getPost(service posts.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("id"))
 		if err != nil {
-			fmt.Println("Error casting id to int")
+			return c.Status(http.StatusBadRequest).JSON(&fiber.Map{
+				"status":  "error",
+				"message": "invalid id",
+				"data":    nil,
+			})
 		}
 
 		post, err := service.FetchPost(id)
 		if err != nil {
-			return c.JSON(&fiber.Map{
+			return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 				"status":  "error",
-				"message": err,
+				"message": err.Error(),
 				"data":    nil,
 			})
 		}
+
 		return c.JSON(&fiber.Map{
 			"status":  "success",
 			"message": "Posts retrieved",
@@ -111,22 +116,23 @@ func likePost(service posts.Service) fiber.Handler {
 
 		postId, err := strconv.Atoi(c.Query("post_id"))
 		if err != nil {
-			return c.JSON(&fiber.Map{
+			return c.Status(http.StatusBadRequest).JSON(&fiber.Map{
 				"status":  "error",
-				"message": "Error with post_id query string",
+				"message": "invalid post_id",
 				"data":    nil,
 			})
 		}
 
 		err = service.LikePost(userId, postId)
 		if err != nil {
-			return c.JSON(&fiber.Map{
+			return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 				"status":  "error",
-				"message": err,
+				"message": err.Error(),
 				"data":    nil,
 			})
 		}
-		return c.JSON(&fiber.Map{
+
+		return c.Status(http.StatusCreated).JSON(&fiber.Map{
 			"status":  "success",
 			"message": "Post liked",
 			"data":    nil,
@@ -144,22 +150,23 @@ func unlikePost(service posts.Service) fiber.Handler {
 
 		post_id, err := strconv.Atoi(c.Query("post_id"))
 		if err != nil {
-			return c.JSON(&fiber.Map{
+			return c.Status(http.StatusBadRequest).JSON(&fiber.Map{
 				"status":  "error",
-				"message": "Error with post_id query string",
+				"message": "invalid post_id",
 				"data":    nil,
 			})
 		}
 
 		err = service.UnlikePost(userId, post_id)
 		if err != nil {
-			return c.JSON(&fiber.Map{
+			return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 				"status":  "error",
-				"message": err,
+				"message": err.Error(),
 				"data":    nil,
 			})
 		}
-		return c.JSON(&fiber.Map{
+
+		return c.Status(http.StatusCreated).JSON(&fiber.Map{
 			"status":  "success",
 			"message": "Post unliked",
 			"data":    nil,
@@ -177,12 +184,13 @@ func getLikedPosts(service posts.Service) fiber.Handler {
 
 		likedPosts, err := service.FetchLikedPosts(userId)
 		if err != nil {
-			return c.JSON(&fiber.Map{
+			return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 				"status":  "error",
-				"message": err,
+				"message": err.Error(),
 				"data":    likedPosts,
 			})
 		}
+
 		return c.JSON(&fiber.Map{
 			"status":  "success",
 			"message": "Favorites retrieved",
