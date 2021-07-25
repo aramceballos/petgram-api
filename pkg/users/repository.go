@@ -1,7 +1,6 @@
 package users
 
 import (
-	"errors"
 	"log"
 	"os"
 
@@ -15,7 +14,7 @@ type Repository interface {
 }
 
 type repo struct {
-	url string
+	db pg.DB
 }
 
 var postgresRepo *repo
@@ -29,8 +28,13 @@ func NewPostgresRepository() Repository {
 	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
 
 	if postgresRepo == nil {
+		opt, err := pg.ParseURL(url)
+		if err != nil {
+			log.Fatal("error parsing db url")
+		}
+		db := pg.Connect(opt)
 		postgresRepo = &repo{
-			url: url,
+			db: *db,
 		}
 	}
 
@@ -38,17 +42,8 @@ func NewPostgresRepository() Repository {
 }
 
 func (r *repo) ReadUser(username string) (entities.User, error) {
-	opt, err := pg.ParseURL(r.url)
-	if err != nil {
-		log.Println("error while parsing pg url")
-		return entities.User{}, errors.New("error on db connection")
-	}
-
-	db := pg.Connect(opt)
-	defer db.Close()
-
 	u := &entities.User{Username: username}
-	err = db.Model(u).
+	err := r.db.Model(u).
 		Where("username = ?", u.Username).
 		Select()
 
@@ -60,17 +55,8 @@ func (r *repo) ReadUser(username string) (entities.User, error) {
 }
 
 func (r *repo) ReadUserById(id int) (entities.User, error) {
-	opt, err := pg.ParseURL(r.url)
-	if err != nil {
-		log.Println("error while parsing pg url")
-		return entities.User{}, errors.New("error on db connection")
-	}
-
-	db := pg.Connect(opt)
-	defer db.Close()
-
 	u := &entities.User{ID: id}
-	err = db.Model(u).
+	err := r.db.Model(u).
 		WherePK().
 		Select()
 

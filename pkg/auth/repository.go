@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"log"
 	"os"
 
@@ -16,7 +15,7 @@ type Repository interface {
 }
 
 type repo struct {
-	url string
+	db pg.DB
 }
 
 var postgresRepo *repo
@@ -30,8 +29,13 @@ func NewPostgresRepository() Repository {
 	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
 
 	if postgresRepo == nil {
+		opt, err := pg.ParseURL(url)
+		if err != nil {
+			log.Fatal("error parsing db url")
+		}
+		db := pg.Connect(opt)
 		postgresRepo = &repo{
-			url: url,
+			db: *db,
 		}
 	}
 
@@ -39,17 +43,8 @@ func NewPostgresRepository() Repository {
 }
 
 func (r *repo) ReadUserByEmail(email string) (*entities.User, error) {
-	opt, err := pg.ParseURL(r.url)
-	if err != nil {
-		log.Println("error while parsing pg url")
-		return &entities.User{}, errors.New("error on db connection")
-	}
-
-	db := pg.Connect(opt)
-	defer db.Close()
-
 	user := &entities.User{}
-	err = db.Model(user).Where("email = ?", email).Select()
+	err := r.db.Model(user).Where("email = ?", email).Select()
 
 	if err != nil {
 		log.Println(err)
@@ -59,17 +54,8 @@ func (r *repo) ReadUserByEmail(email string) (*entities.User, error) {
 }
 
 func (r *repo) ReadUserByUsername(username string) (*entities.User, error) {
-	opt, err := pg.ParseURL(r.url)
-	if err != nil {
-		log.Println("error while parsing pg url")
-		return &entities.User{}, errors.New("error on db connection")
-	}
-
-	db := pg.Connect(opt)
-	defer db.Close()
-
 	user := &entities.User{}
-	err = db.Model(user).Where("username = ?", username).Select()
+	err := r.db.Model(user).Where("username = ?", username).Select()
 
 	if err != nil {
 		log.Println(err)
@@ -79,16 +65,7 @@ func (r *repo) ReadUserByUsername(username string) (*entities.User, error) {
 }
 
 func (r *repo) CreateUser(user *entities.User) error {
-	opt, err := pg.ParseURL(r.url)
-	if err != nil {
-		log.Println("error while parsing pg url")
-		return errors.New("error on db connection")
-	}
-
-	db := pg.Connect(opt)
-	defer db.Close()
-
-	_, err = db.Model(user).
+	_, err := r.db.Model(user).
 		Insert()
 
 	if err != nil {

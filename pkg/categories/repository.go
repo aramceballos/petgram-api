@@ -1,7 +1,6 @@
 package categories
 
 import (
-	"errors"
 	"log"
 	"os"
 
@@ -15,7 +14,7 @@ type Repository interface {
 }
 
 type repo struct {
-	url string
+	db pg.DB
 }
 
 var postgresRepo *repo
@@ -29,8 +28,13 @@ func NewPostgresRepository() Repository {
 	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
 
 	if postgresRepo == nil {
+		opt, err := pg.ParseURL(url)
+		if err != nil {
+			log.Fatal("error parsing db url")
+		}
+		db := pg.Connect(opt)
 		postgresRepo = &repo{
-			url: url,
+			db: *db,
 		}
 	}
 
@@ -38,17 +42,8 @@ func NewPostgresRepository() Repository {
 }
 
 func (r *repo) ReadCategories() ([]entities.Category, error) {
-	opt, err := pg.ParseURL(r.url)
-	if err != nil {
-		log.Println("error while parsing pg url")
-		return []entities.Category{}, errors.New("error on db connection")
-	}
-
-	db := pg.Connect(opt)
-	defer db.Close()
-
 	var c []entities.Category
-	err = db.Model(&c).Select()
+	err := r.db.Model(&c).Select()
 
 	if err != nil {
 		log.Println(err)
@@ -58,17 +53,8 @@ func (r *repo) ReadCategories() ([]entities.Category, error) {
 }
 
 func (r *repo) ReadCategory(id int) (entities.Category, error) {
-	opt, err := pg.ParseURL(r.url)
-	if err != nil {
-		log.Println("error while parsing pg url")
-		return entities.Category{}, errors.New("error on db connection")
-	}
-
-	db := pg.Connect(opt)
-	defer db.Close()
-
 	c := &entities.Category{ID: id}
-	err = db.Model(c).WherePK().Select()
+	err := r.db.Model(c).WherePK().Select()
 
 	if err != nil {
 		log.Println(err)
