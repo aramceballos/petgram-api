@@ -41,34 +41,26 @@ func (s *service) ReadUser(input entities.LoginInput) (entities.Response, error)
 	pass := input.Password
 
 	email, err := s.repository.ReadUserByEmail(identity)
-	if err != nil {
-		return entities.Response{}, errors.New("error on email")
-	}
-
-	user, err := s.repository.ReadUserByUsername(identity)
-	if err != nil {
-		return entities.Response{}, errors.New("error on username")
-	}
-
-	if email == nil && user == nil {
-		return entities.Response{}, errors.New("user not found")
-	}
-
-	if email == nil {
-		ud = entities.User{
-			ID:       user.ID,
-			Name:     user.Name,
-			Username: user.Username,
-			Email:    user.Email,
-			Password: user.Password,
-		}
-	} else {
+	if err == nil {
 		ud = entities.User{
 			ID:       email.ID,
 			Name:     email.Name,
 			Username: email.Username,
 			Email:    email.Email,
 			Password: email.Password,
+		}
+	} else {
+		user, err := s.repository.ReadUserByUsername(identity)
+		if err == nil {
+			ud = entities.User{
+				ID:       user.ID,
+				Name:     user.Name,
+				Username: user.Username,
+				Email:    user.Email,
+				Password: user.Password,
+			}
+		} else {
+			return entities.Response{}, errors.New("user not found")
 		}
 	}
 
