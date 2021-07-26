@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -27,7 +26,6 @@ func extractClaims(tokenStr string) (jwt.MapClaims, bool) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, true
 	} else {
-		log.Printf("Invalid JWT Token")
 		return nil, false
 	}
 }

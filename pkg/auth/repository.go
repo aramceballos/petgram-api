@@ -46,10 +46,6 @@ func (r *repo) ReadUserByEmail(email string) (*entities.User, error) {
 	user := &entities.User{}
 	err := r.db.Model(user).Where("email = ?", email).Select()
 
-	if err != nil {
-		log.Println(err)
-	}
-
 	return user, err
 }
 
@@ -57,20 +53,12 @@ func (r *repo) ReadUserByUsername(username string) (*entities.User, error) {
 	user := &entities.User{}
 	err := r.db.Model(user).Where("username = ?", username).Select()
 
-	if err != nil {
-		log.Println(err)
-	}
-
 	return user, err
 }
 
 func (r *repo) CreateUser(user *entities.User) error {
 	_, err := r.db.Model(user).
 		Insert()
-
-	if err != nil {
-		log.Println(err)
-	}
 
 	return err
 }

@@ -47,10 +47,6 @@ func (r *repo) ReadUser(username string) (entities.User, error) {
 		Where("username = ?", u.Username).
 		Select()
 
-	if err != nil {
-		log.Println(err)
-	}
-
 	return *u, err
 }
 
@@ -59,10 +55,6 @@ func (r *repo) ReadUserById(id int) (entities.User, error) {
 	err := r.db.Model(u).
 		WherePK().
 		Select()
-
-	if err != nil {
-		log.Println(err)
-	}
 
 	return *u, err
 }

@@ -45,20 +45,12 @@ func (r *repo) ReadCategories() ([]entities.Category, error) {
 	var c []entities.Category
 	err := r.db.Model(&c).Select()
 
-	if err != nil {
-		log.Println(err)
-	}
-
 	return c, err
 }
 
 func (r *repo) ReadCategory(id int) (entities.Category, error) {
 	c := &entities.Category{ID: id}
 	err := r.db.Model(c).WherePK().Select()
-
-	if err != nil {
-		log.Println(err)
-	}
 
 	return *c, err
 }
