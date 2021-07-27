@@ -121,7 +121,5 @@ func TestCategoriesRoute(t *testing.T) {
 		if err != nil {
 			log.Fatalf("could not unmarshall response %v", err)
 		}
-
-		fmt.Println(got["message"])
 	}
 }
