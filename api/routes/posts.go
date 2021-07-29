@@ -110,7 +110,7 @@ func likePost(service posts.Service) fiber.Handler {
 		token := strings.Split(authorizationHeader, " ")[1]
 		claims, _ := extractClaims(token)
 
-		var userId int = int(claims["user_id"].(float64))
+		var userId int = int(claims["sub"].(float64))
 
 		postId, err := strconv.Atoi(c.Query("post_id"))
 		if err != nil {
@@ -144,7 +144,7 @@ func unlikePost(service posts.Service) fiber.Handler {
 		token := strings.Split(authorizationHeader, " ")[1]
 		claims, _ := extractClaims(token)
 
-		var userId int = int(claims["user_id"].(float64))
+		var userId int = int(claims["sub"].(float64))
 
 		post_id, err := strconv.Atoi(c.Query("post_id"))
 		if err != nil {
@@ -178,7 +178,7 @@ func getLikedPosts(service posts.Service) fiber.Handler {
 		token := strings.Split(authorizationHeader, " ")[1]
 		claims, _ := extractClaims(token)
 
-		var userId int = int(claims["user_id"].(float64))
+		var userId int = int(claims["sub"].(float64))
 
 		likedPosts, err := service.FetchLikedPosts(userId)
 		if err != nil {

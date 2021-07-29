@@ -72,7 +72,7 @@ func (s *service) ReadUser(input entities.LoginInput) (entities.Response, error)
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = ud.Username
-	claims["user_id"] = ud.ID
+	claims["sub"] = ud.ID
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 	secret := os.Getenv("SECRET")
