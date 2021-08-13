@@ -2,7 +2,6 @@ package auth
 
 import (
 	"log"
-	"os"
 
 	"github.com/aramceballos/petgram-api/pkg/entities"
 	"github.com/go-pg/pg/v10"
@@ -21,12 +20,7 @@ type repo struct {
 var postgresRepo *repo
 
 func NewPostgresRepository() Repository {
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	url := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + "/" + dbName
+	url := "postgres://postgres:postgress@db:5432/postgres?sslmode=disable"
 
 	if postgresRepo == nil {
 		opt, err := pg.ParseURL(url)
@@ -34,6 +28,7 @@ func NewPostgresRepository() Repository {
 			log.Fatal("error parsing db url")
 		}
 		db := pg.Connect(opt)
+
 		postgresRepo = &repo{
 			db: *db,
 		}

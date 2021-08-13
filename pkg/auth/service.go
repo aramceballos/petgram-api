@@ -102,13 +102,13 @@ func (s *service) InsertUser(user *entities.User) error {
 	e := user.Email
 	u := user.Username
 
-	email, _ := s.repository.ReadUserByEmail(e)
-	if email != nil {
+	_, err = s.repository.ReadUserByEmail(e)
+	if err == nil {
 		return errors.New("user already exists")
 	}
 
-	userName, _ := s.repository.ReadUserByUsername(u)
-	if userName != nil {
+	_, err = s.repository.ReadUserByUsername(u)
+	if err == nil {
 		return errors.New("user already exists")
 	}
 
