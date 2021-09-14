@@ -45,7 +45,7 @@ func (r *repo) ReadPosts() ([]entities.Post, error) {
 	err := r.db.Model(&p).
 		ColumnExpr("post.*").
 		ColumnExpr("u.name, u.username, u.email").
-		Join("JOIN petgram.users AS u ON u.id = post.user_id").
+		Join("JOIN users AS u ON u.id = post.user_id").
 		Relation("Likes").
 		Select()
 
@@ -57,7 +57,7 @@ func (r *repo) ReadPostsByUserID(userId int) ([]entities.Post, error) {
 	err := r.db.Model(&p).
 		ColumnExpr("post.*").
 		ColumnExpr("u.name, u.username, u.email").
-		Join("JOIN petgram.users AS u ON u.id = post.user_id").
+		Join("JOIN users AS u ON u.id = post.user_id").
 		Where("post.user_id = ?", userId).
 		Relation("Likes").
 		Select()
@@ -75,7 +75,7 @@ func (r *repo) ReadPost(id int) (entities.Post, error) {
 		ColumnExpr("post.*").
 		ColumnExpr("u.name, u.username, u.email").
 		WherePK().
-		Join("JOIN petgram.users AS u ON u.id = post.user_id").
+		Join("JOIN users AS u ON u.id = post.user_id").
 		Relation("Likes").
 		Select()
 
@@ -100,7 +100,7 @@ func (r *repo) ReadLikedPosts(userId int) ([]entities.Post, error) {
 	var p []entities.Post
 	err := r.db.Model(&p).
 		ColumnExpr("post.*").
-		Join("LEFT JOIN petgram.likes AS l ON l.post_id = post.id").
+		Join("LEFT JOIN likes AS l ON l.post_id = post.id").
 		Where("l.user_id = ?", userId).
 		Select()
 

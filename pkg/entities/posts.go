@@ -1,7 +1,7 @@
 package entities
 
 type Post struct {
-	tableName   struct{} `json:"-" pg:"petgram.posts"`
+	tableName   struct{} `json:"-" pg:"posts"`
 	ID          int      `json:"id"`
 	UserID      int      `json:"-"`
 	CategoryID  int      `json:"category_id"`
@@ -15,7 +15,7 @@ type Post struct {
 }
 
 type Like struct {
-	tableName struct{} `json:"-" pg:"petgram.likes"`
+	tableName struct{} `json:"-" pg:"likes"`
 	ID        int      `json:"id"`
 	UserID    int      `json:"user_id"`
 	PostID    int      `json:"post_id"`

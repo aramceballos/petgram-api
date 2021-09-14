@@ -1,7 +1,7 @@
 package entities
 
 type User struct {
-	tableName struct{} `json:"-" pg:"petgram.users"`
+	tableName struct{} `json:"-" pg:"users"`
 	ID        int      `json:"id"`
 	Email     string   `json:"email"`
 	Name      string   `json:"name"`
