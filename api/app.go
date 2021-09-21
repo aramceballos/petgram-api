@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/aramceballos/petgram-api/api/routes"
 	"github.com/gofiber/fiber/v2"
@@ -27,6 +28,8 @@ func main() {
 	routes.AuthRouter(api)
 	routes.UsersRouter(api)
 
-	app.Listen(":5000")
+	port := ":" + os.Getenv("PORT")
+
+	app.Listen(port)
 
 }
