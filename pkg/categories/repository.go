@@ -2,6 +2,7 @@ package categories
 
 import (
 	"log"
+	"os"
 
 	"github.com/aramceballos/petgram-api/pkg/entities"
 	"github.com/go-pg/pg/v10"
@@ -19,7 +20,7 @@ type repo struct {
 var postgresRepo *repo
 
 func NewPostgresRepository() Repository {
-	url := "postgres://postgres:postgress@db:5432/postgres?sslmode=disable"
+	url := os.Getenv("DATABASE_URL")
 
 	if postgresRepo == nil {
 		opt, err := pg.ParseURL(url)
