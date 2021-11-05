@@ -1,11 +1,7 @@
-GOCMD=go
-GOTEST=$(GOCMD) test
-GOVET=$(GOCMD) vet
-BINARY_NAME=main
-VERSION?=0.0.0
+BINARY_NAME=petgram-api
+VERSION?=1.0.0
 SERVICE_PORT?=5000
-DOCKER_REGISTRY?= #if set it should finished by /
-EXPORT_RESULT?=false # for CI please set EXPORT_RESULT to true
+DOCKER_REGISTRY?= armc7/
 
 GREEN  := $(shell tput -Txterm setaf 2)
 YELLOW := $(shell tput -Txterm setaf 3)
@@ -18,42 +14,25 @@ RESET  := $(shell tput -Txterm sgr0)
 all: help
 
 ## Build:
-build: ## Build your project and put the output binary in out/bin/
+build: ## Build the project and put the output binary in out/bin/
 	mkdir -p out/bin
-	GO111MODULE=on $(GOCMD) build -mod vendor -o out/bin/$(BINARY_NAME) ./api
+	go build -mod vendor -o out/bin/$(BINARY_NAME) ./api
 
 clean: ## Remove build related file
 	rm -fr ./bin
 	rm -fr ./out
-	rm -f ./junit-report.xml checkstyle-report.xml ./coverage.xml ./profile.cov yamllint-checkstyle.xml
+	rm -f ./profile.cov
 
 vendor: ## Copy of all packages needed to support builds and tests in the vendor directory
-	$(GOCMD) mod vendor
-
-watch: ## Run the code with cosmtrek/air to have automatic reload on changes
-	$(eval PACKAGE_NAME=$(shell head -n 1 go.mod | cut -d ' ' -f2))
-	docker run -it --rm -w /go/src/$(PACKAGE_NAME) -v $(shell pwd):/go/src/$(PACKAGE_NAME) -p $(SERVICE_PORT):$(SERVICE_PORT) cosmtrek/air
+	go mod vendor
 
 ## Test:
 test: ## Run the tests of the project
-ifeq ($(EXPORT_RESULT), true)
-	GO111MODULE=off go get -u github.com/jstemmer/go-junit-report
-	$(eval OUTPUT_OPTIONS = | tee /dev/tty | go-junit-report -set-exit-code > junit-report.xml)
-endif
-	$(GOTEST) -v -race ./... $(OUTPUT_OPTIONS)
-
-coverage: ## Run the tests of the project and export the coverage
-	$(GOTEST) -cover -covermode=count -coverprofile=profile.cov ./...
-	$(GOCMD) tool cover -func profile.cov
-ifeq ($(EXPORT_RESULT), true)
-	GO111MODULE=off go get -u github.com/AlekSi/gocov-xml
-	GO111MODULE=off go get -u github.com/axw/gocov/gocov
-	gocov convert profile.cov | gocov-xml > coverage.xml
-endif
+	go test -v -race test/*
 
 ## Docker:
 docker-build: ## Use the dockerfile to build the container
-	docker build --rm --tag $(BINARY_NAME) .
+	docker build --tag $(BINARY_NAME) .
 
 docker-release: ## Release the container with tag latest and version
 	docker tag $(BINARY_NAME) $(DOCKER_REGISTRY)$(BINARY_NAME):latest
