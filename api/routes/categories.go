@@ -47,6 +47,13 @@ func getCategory(service categories.Service) fiber.Handler {
 
 		category, err := service.FetchCategory(id)
 		if err != nil {
+			if err.Error() == "category not found" {
+				return c.Status(http.StatusNotFound).JSON(&fiber.Map{
+					"status":  "error",
+					"message": err.Error(),
+					"data":    nil,
+				})
+			}
 			return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 				"status":  "error",
 				"message": err.Error(),

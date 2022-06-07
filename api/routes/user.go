@@ -21,9 +21,17 @@ func getUser(service users.Service) fiber.Handler {
 		username := c.Query("username")
 		userId, err := strconv.Atoi(c.Query("id"))
 
-		if username != "" {
+		if username != "" { // If username is not empty, get user by username
 			user, err := service.FetchUser(username)
 			if err != nil {
+				if err.Error() == "user not found" {
+					return c.Status(http.StatusNotFound).JSON(&fiber.Map{
+						"status":  "error",
+						"message": err.Error(),
+						"data":    nil,
+					})
+				}
+
 				return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 					"status":  "error",
 					"message": err.Error(),
@@ -36,12 +44,18 @@ func getUser(service users.Service) fiber.Handler {
 				"message": "User retrieved",
 				"data":    user,
 			})
-		}
-
-		if err == nil {
+		} else if err == nil { // If id is not empty, get user by id
 			user, err := service.FetchUserById(userId)
 			if err != nil {
-				return c.JSON(&fiber.Map{
+				if err.Error() == "user not found" {
+					return c.Status(http.StatusNotFound).JSON(&fiber.Map{
+						"status":  "error",
+						"message": err.Error(),
+						"data":    nil,
+					})
+				}
+
+				return c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 					"status":  "error",
 					"message": err.Error(),
 					"data":    nil,
@@ -57,7 +71,7 @@ func getUser(service users.Service) fiber.Handler {
 
 		return c.Status(http.StatusBadRequest).JSON(&fiber.Map{
 			"status":  "error",
-			"message": "username or user_id were not provided not provided",
+			"message": "username or id were not provided not provided",
 			"data":    nil,
 		})
 	}

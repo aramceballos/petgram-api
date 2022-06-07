@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -34,15 +33,11 @@ func NewService() Service {
 }
 
 func (s *service) ReadUser(input entities.LoginInput) (entities.Response, error) {
+	var userData entities.User
 
-	var ud entities.User
-
-	identity := input.Identity
-	pass := input.Password
-
-	email, err := s.repository.ReadUserByEmail(identity)
+	email, err := s.repository.ReadUserByEmail(input.Identity)
 	if err == nil {
-		ud = entities.User{
+		userData = entities.User{
 			ID:       email.ID,
 			Name:     email.Name,
 			Username: email.Username,
@@ -50,9 +45,9 @@ func (s *service) ReadUser(input entities.LoginInput) (entities.Response, error)
 			Password: email.Password,
 		}
 	} else {
-		user, err := s.repository.ReadUserByUsername(identity)
+		user, err := s.repository.ReadUserByUsername(input.Identity)
 		if err == nil {
-			ud = entities.User{
+			userData = entities.User{
 				ID:       user.ID,
 				Name:     user.Name,
 				Username: user.Username,
@@ -60,32 +55,32 @@ func (s *service) ReadUser(input entities.LoginInput) (entities.Response, error)
 				Password: user.Password,
 			}
 		} else {
-			return entities.Response{}, errors.New("user not found")
+			return entities.Response{}, fmt.Errorf("user not found")
 		}
 	}
 
-	if !CheckPasswordHash(pass, ud.Password) {
-		return entities.Response{}, errors.New("invalid password")
+	if !CheckPasswordHash(input.Password, userData.Password) {
+		return entities.Response{}, fmt.Errorf("invalid password")
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
-	claims["username"] = ud.Username
-	claims["sub"] = ud.ID
+	claims["username"] = userData.Username
+	claims["sub"] = userData.ID
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 	secret := os.Getenv("SECRET")
 
 	t, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return entities.Response{}, errors.New("error signing token")
+		return entities.Response{}, fmt.Errorf("error signing token")
 	}
 
 	res := entities.Response{
-		ID:       ud.ID,
-		Name:     ud.Name,
-		Username: ud.Username,
+		ID:       userData.ID,
+		Name:     userData.Name,
+		Username: userData.Username,
 		Token:    t,
 	}
 
@@ -95,7 +90,8 @@ func (s *service) ReadUser(input entities.LoginInput) (entities.Response, error)
 func (s *service) InsertUser(user *entities.User) error {
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		fmt.Println("Unable to has password")
+		fmt.Println("Unable to hash password")
+		return fmt.Errorf("unable to hash password")
 	}
 	user.Password = string(hashedPass)
 
@@ -104,12 +100,12 @@ func (s *service) InsertUser(user *entities.User) error {
 
 	_, err = s.repository.ReadUserByEmail(e)
 	if err == nil {
-		return errors.New("user already exists")
+		return fmt.Errorf("user already exists")
 	}
 
 	_, err = s.repository.ReadUserByUsername(u)
 	if err == nil {
-		return errors.New("user already exists")
+		return fmt.Errorf("user already exists")
 	}
 
 	err = s.repository.CreateUser(user)

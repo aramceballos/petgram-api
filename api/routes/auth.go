@@ -28,43 +28,11 @@ func login(service auth.Service) fiber.Handler {
 
 		res, err := service.ReadUser(input)
 		if err != nil {
-			if err.Error() == "error on email" {
-				return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-					"status":  "error",
-					"message": "Error on email",
-					"data":    nil,
-				})
-			}
-
-			if err.Error() == "error on username" {
-				return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-					"status":  "error",
-					"message": "Error on username",
-					"data":    nil,
-				})
-			}
-
-			if err.Error() == "user not found" {
-				return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-					"status":  "error",
-					"message": "User not found",
-					"data":    nil,
-				})
-			}
-
-			if err.Error() == "invalid password" {
-				return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-					"status":  "error",
-					"message": "Invalid password",
-					"data":    nil,
-				})
-			}
-
 			if err.Error() == "error signing token" {
 				return c.SendStatus(http.StatusInternalServerError)
 			}
 
-			return c.JSON(&fiber.Map{
+			return c.Status(http.StatusBadRequest).JSON(&fiber.Map{
 				"status":  "error",
 				"message": err.Error(),
 				"data":    nil,

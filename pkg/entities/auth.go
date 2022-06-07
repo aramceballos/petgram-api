@@ -1,12 +1,11 @@
 package entities
 
 type User struct {
-	tableName struct{} `json:"-" pg:"users"`
-	ID        int      `json:"id"`
-	Email     string   `json:"email"`
-	Name      string   `json:"name"`
-	Username  string   `json:"username"`
-	Password  string   `json:"password"`
+	ID       int    `json:"id"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type LoginInput struct {

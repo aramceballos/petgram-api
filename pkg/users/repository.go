@@ -1,11 +1,13 @@
 package users
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/aramceballos/petgram-api/pkg/entities"
-	"github.com/go-pg/pg/v10"
+	_ "github.com/lib/pq"
 )
 
 type Repository interface {
@@ -14,7 +16,7 @@ type Repository interface {
 }
 
 type repo struct {
-	db pg.DB
+	db sql.DB
 }
 
 var postgresRepo *repo
@@ -23,11 +25,10 @@ func NewPostgresRepository() Repository {
 	url := os.Getenv("DATABASE_URL")
 
 	if postgresRepo == nil {
-		opt, err := pg.ParseURL(url)
+		db, err := sql.Open("postgres", url)
 		if err != nil {
-			log.Fatal("error parsing db url")
+			log.Fatal("error connecting to db")
 		}
-		db := pg.Connect(opt)
 		postgresRepo = &repo{
 			db: *db,
 		}
@@ -37,19 +38,23 @@ func NewPostgresRepository() Repository {
 }
 
 func (r *repo) ReadUser(username string) (entities.User, error) {
-	u := &entities.User{Username: username}
-	err := r.db.Model(u).
-		Where("username = ?", u.Username).
-		Select()
+	var user entities.User
 
-	return *u, err
+	err := r.db.QueryRow("SELECT * FROM users WHERE username = $1", username).Scan(&user.ID, &user.Email, &user.Name, &user.Username, &user.Password)
+	if err != nil && err.Error() == "sql: no rows in result set" {
+		return user, fmt.Errorf("user not found")
+	}
+
+	return user, err
 }
 
 func (r *repo) ReadUserById(id int) (entities.User, error) {
-	u := &entities.User{ID: id}
-	err := r.db.Model(u).
-		WherePK().
-		Select()
+	var user entities.User
 
-	return *u, err
+	err := r.db.QueryRow("SELECT * FROM users WHERE id = $1", id).Scan(&user.ID, &user.Email, &user.Name, &user.Username, &user.Password)
+	if err != nil && err.Error() == "sql: no rows in result set" {
+		return user, fmt.Errorf("user not found")
+	}
+
+	return user, err
 }

@@ -1,11 +1,13 @@
 package categories
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/aramceballos/petgram-api/pkg/entities"
-	"github.com/go-pg/pg/v10"
+	_ "github.com/lib/pq"
 )
 
 type Repository interface {
@@ -14,7 +16,7 @@ type Repository interface {
 }
 
 type repo struct {
-	db pg.DB
+	db sql.DB
 }
 
 var postgresRepo *repo
@@ -23,11 +25,10 @@ func NewPostgresRepository() Repository {
 	url := os.Getenv("DATABASE_URL")
 
 	if postgresRepo == nil {
-		opt, err := pg.ParseURL(url)
+		db, err := sql.Open("postgres", url)
 		if err != nil {
-			log.Fatal("error parsing db url")
+			log.Fatal("error connecting to db")
 		}
-		db := pg.Connect(opt)
 		postgresRepo = &repo{
 			db: *db,
 		}
@@ -37,15 +38,39 @@ func NewPostgresRepository() Repository {
 }
 
 func (r *repo) ReadCategories() ([]entities.Category, error) {
-	var c []entities.Category
-	err := r.db.Model(&c).Select()
+	var categories []entities.Category
 
-	return c, err
+	stmt, err := r.db.Prepare("SELECT * FROM categories")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var category entities.Category
+		err := rows.Scan(&category.ID, &category.Category, &category.ImageURL)
+		if err != nil {
+			return nil, err
+		}
+		categories = append(categories, category)
+	}
+
+	return categories, err
 }
 
 func (r *repo) ReadCategory(id int) (entities.Category, error) {
-	c := &entities.Category{ID: id}
-	err := r.db.Model(c).WherePK().Select()
+	var category entities.Category
 
-	return *c, err
+	err := r.db.QueryRow("SELECT * FROM categories WHERE id = $1", id).Scan(&category.ID, &category.Category, &category.ImageURL)
+	if err != nil && err.Error() == "sql: no rows in result set" {
+		return category, fmt.Errorf("category not found")
+	}
+
+	return category, err
 }

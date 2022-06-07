@@ -1,12 +1,12 @@
 package posts
 
 import (
-	"errors"
+	"database/sql"
 	"log"
 	"os"
 
 	"github.com/aramceballos/petgram-api/pkg/entities"
-	"github.com/go-pg/pg/v10"
+	_ "github.com/lib/pq"
 )
 
 type Repository interface {
@@ -19,7 +19,7 @@ type Repository interface {
 }
 
 type repo struct {
-	db pg.DB
+	db sql.DB
 }
 
 var postgresRepo *repo
@@ -28,11 +28,11 @@ func NewPostgresRepository() Repository {
 	url := os.Getenv("DATABASE_URL")
 
 	if postgresRepo == nil {
-		opt, err := pg.ParseURL(url)
+		db, err := sql.Open("postgres", url)
 		if err != nil {
-			log.Fatal("error parsing db url")
+			log.Fatal("error connecting to db")
 		}
-		db := pg.Connect(opt)
+
 		postgresRepo = &repo{
 			db: *db,
 		}
@@ -42,68 +42,198 @@ func NewPostgresRepository() Repository {
 }
 
 func (r *repo) ReadPosts() ([]entities.Post, error) {
-	var p []entities.Post
-	err := r.db.Model(&p).
-		ColumnExpr("post.*").
-		ColumnExpr("u.name, u.username, u.email").
-		Join("JOIN users AS u ON u.id = post.user_id").
-		Relation("Likes").
-		Select()
+	var posts []entities.Post
 
-	return p, err
+	tx, err := r.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT posts.*, u.name, u.username, u.email FROM posts JOIN users AS u ON u.id = posts.user_id")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post entities.Post
+		err := rows.Scan(&post.ID, &post.UserID, &post.CategoryID, &post.PostDate, &post.ImageURL, &post.Description, &post.Name, &post.Username, &post.Email)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	rows, err = tx.Query("SELECT * from likes")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var like entities.Like
+		err := rows.Scan(&like.ID, &like.UserID, &like.PostID)
+		if err != nil {
+			return nil, err
+		}
+		for i, p := range posts {
+			if p.ID == like.PostID {
+				posts[i].Likes = append(p.Likes, &like)
+			}
+		}
+	}
+
+	err = tx.Rollback()
+
+	return posts, err
 }
 
 func (r *repo) ReadPostsByUserID(userId int) ([]entities.Post, error) {
-	var p []entities.Post
-	err := r.db.Model(&p).
-		ColumnExpr("post.*").
-		ColumnExpr("u.name, u.username, u.email").
-		Join("JOIN users AS u ON u.id = post.user_id").
-		Where("post.user_id = ?", userId).
-		Relation("Likes").
-		Select()
+	var posts []entities.Post
 
-	if len(p) == 0 {
-		return []entities.Post{}, errors.New("there are not posts from the given user")
+	tx, err := r.db.Begin()
+	if err != nil {
+		return nil, err
 	}
 
-	return p, err
+	rows, err := tx.Query("SELECT posts.*, u.name, u.username, u.email FROM posts JOIN users AS u ON u.id = posts.user_id WHERE posts.user_id = $1", userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post entities.Post
+		err := rows.Scan(&post.ID, &post.UserID, &post.CategoryID, &post.PostDate, &post.ImageURL, &post.Description, &post.Name, &post.Username, &post.Email)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	rows, err = tx.Query("SELECT * from likes")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var like entities.Like
+		err := rows.Scan(&like.ID, &like.UserID, &like.PostID)
+		if err != nil {
+			return nil, err
+		}
+
+		for i, p := range posts {
+			if p.ID == like.PostID {
+				posts[i].Likes = append(posts[i].Likes, &like)
+			}
+		}
+	}
+
+	err = tx.Rollback()
+
+	return posts, err
 }
 
 func (r *repo) ReadPost(id int) (entities.Post, error) {
-	p := &entities.Post{ID: id}
-	err := r.db.Model(p).
-		ColumnExpr("post.*").
-		ColumnExpr("u.name, u.username, u.email").
-		WherePK().
-		Join("JOIN users AS u ON u.id = post.user_id").
-		Relation("Likes").
-		Select()
+	post := &entities.Post{ID: id}
 
-	return *p, err
+	tx, err := r.db.Begin()
+	if err != nil {
+		return entities.Post{}, err
+	}
+
+	err = tx.QueryRow("SELECT posts.*, u.name, u.username, u.email FROM posts JOIN users AS u ON u.id = posts.user_id WHERE posts.id = $1", id).Scan(&post.ID, &post.UserID, &post.CategoryID, &post.PostDate, &post.ImageURL, &post.Description, &post.Name, &post.Username, &post.Email)
+	if err != nil {
+		return entities.Post{}, err
+	}
+
+	rows, err := tx.Query("SELECT * from likes")
+	if err != nil {
+		return entities.Post{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var like entities.Like
+		err := rows.Scan(&like.ID, &like.UserID, &like.PostID)
+		if err != nil {
+			return entities.Post{}, err
+		}
+
+		if post.ID == like.PostID {
+			post.Likes = append(post.Likes, &like)
+		}
+	}
+
+	return *post, err
 }
 
 func (r *repo) LikePost(userId int, postId int) error {
-	l := &entities.Like{UserID: userId, PostID: postId}
-	_, err := r.db.Model(l).Insert()
+	stmt, err := r.db.Prepare("INSERT INTO likes (user_id, post_id) VALUES ($1, $2)")
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(userId, postId)
 
 	return err
 }
 
 func (r *repo) UnlikePost(userId int, postId int) error {
-	l := &entities.Like{}
-	_, err := r.db.Model(l).Where("user_id = ? AND post_id = ?", userId, postId).Delete()
+	stmt, err := r.db.Prepare("DELETE FROM likes WHERE user_id = $1 AND post_id = $2")
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(userId, postId)
 
 	return err
 }
 
 func (r *repo) ReadLikedPosts(userId int) ([]entities.Post, error) {
-	var p []entities.Post
-	err := r.db.Model(&p).
-		ColumnExpr("post.*").
-		Join("LEFT JOIN likes AS l ON l.post_id = post.id").
-		Where("l.user_id = ?", userId).
-		Select()
+	var posts []entities.Post
 
-	return p, err
+	tx, err := r.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT posts.*, u.name, u.username, u.email FROM posts JOIN users AS u ON u.id = posts.user_id JOIN likes ON likes.post_id = posts.id WHERE likes.user_id = $1", userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post entities.Post
+		err := rows.Scan(&post.ID, &post.UserID, &post.CategoryID, &post.PostDate, &post.ImageURL, &post.Description, &post.Name, &post.Username, &post.Email)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	rows, err = tx.Query("SELECT * from likes")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var like entities.Like
+		err := rows.Scan(&like.ID, &like.UserID, &like.PostID)
+		if err != nil {
+			return nil, err
+		}
+
+		for i, p := range posts {
+			if p.ID == like.PostID {
+				posts[i].Likes = append(posts[i].Likes, &like)
+			}
+		}
+	}
+
+	return posts, err
 }
