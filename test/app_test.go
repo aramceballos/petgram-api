@@ -28,7 +28,7 @@ func getToken(app *fiber.App) string {
 
 	postBody, _ := json.Marshal(map[string]string{
 		"identity": "tester",
-		"password": "test",
+		"password": "tester",
 	})
 
 	req, _ := http.NewRequest(

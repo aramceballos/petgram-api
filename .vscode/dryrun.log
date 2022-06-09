@@ -1,0 +1,12 @@
+make: Entering directory `/Users/aram/Documents/petgram-api'
+echo ''
+echo 'Usage:'
+echo '  [33mmake(B[m [32m<target>(B[m'
+echo ''
+echo 'Targets:'
+awk 'BEGIN {FS = ":.*?## "} { \
+		if (/^[a-zA-Z_-]+:.*?##.*$/) {printf "    [33m%-20s[32m%s(B[m\n", $1, $2} \
+		else if (/^## .*$/) {printf "  [36m%s(B[m\n", substr($1,4)} \
+		}'  Makefile
+make: Leaving directory `/Users/aram/Documents/petgram-api'
+ 
